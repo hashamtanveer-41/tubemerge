@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserProfile, LicenseInfo, UsageMetrics, ActiveDevice } from '@/types';
 import { Button } from '@/components/ui/button';
+import { api } from '@/services/api';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -37,6 +38,8 @@ interface ProfileViewProps {
   showToast: (message: string, type: 'error' | 'success' | 'info') => void;
 }
 
+const ENABLE_ADMIN = import.meta.env.VITE_ENABLE_ADMIN === 'true';
+
 export function ProfileView({
   profile,
   license,
@@ -55,6 +58,35 @@ export function ProfileView({
   const [licenseInput, setLicenseInput] = useState('');
   const [activating, setActivating] = useState(false);
   const [copiedHwid, setCopiedHwid] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (planTier: string) => {
+    if (!profile) {
+      showToast('Please sign in or create an account first to link your purchase.', 'info');
+      if (onSignInClick) onSignInClick();
+      return;
+    }
+
+    setCheckoutLoading(planTier);
+    try {
+      const session = await api.createCheckoutSession(planTier);
+      if (session.checkout_url) {
+        if (session.checkout_url.includes('simulated=true')) {
+          showToast(`Test Mode: Account upgraded to ${session.plan_tier}! Refreshing...`, 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+        } else {
+          showToast('Opening secure Stripe checkout…', 'info');
+          window.open(session.checkout_url, '_blank');
+        }
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to initialize checkout', 'error');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   const handleCopyHwid = () => {
     navigator.clipboard.writeText(license.hardware_id);
@@ -175,7 +207,7 @@ export function ProfileView({
 
             {/* Header Actions: Admin Console, Upgrade, Sign Out, Sign In */}
             <div className="flex items-center gap-3 shrink-0">
-              {isAdmin && onNavigateToAdmin && (
+              {ENABLE_ADMIN && isAdmin && onNavigateToAdmin && (
                 <Button
                   size="default"
                   variant="default"
@@ -441,13 +473,11 @@ export function ProfileView({
                   <Button
                     variant="outline"
                     size="default"
-                    onClick={() => {
-                      const inputEl = document.getElementById('licenseKeyInput');
-                      inputEl?.focus();
-                    }}
+                    loading={checkoutLoading === 'CREATOR_PRO_MONTHLY'}
+                    onClick={() => handleCheckout('CREATOR_PRO_MONTHLY')}
                     className="w-full h-10 font-semibold text-xs border-[#404040] hover:border-white text-white"
                   >
-                    Get Pro Pass - $4.99/mo
+                    Get Pro Pass - $9/mo
                   </Button>
                 </div>
               )}
@@ -504,10 +534,8 @@ export function ProfileView({
                   <Button
                     variant="default"
                     size="default"
-                    onClick={() => {
-                      const inputEl = document.getElementById('licenseKeyInput');
-                      inputEl?.focus();
-                    }}
+                    loading={checkoutLoading === 'LIFETIME'}
+                    onClick={() => handleCheckout('LIFETIME')}
                     icon={Sparkles}
                     className="w-full h-11 font-black text-xs shadow-lg shadow-red-950/50"
                   >

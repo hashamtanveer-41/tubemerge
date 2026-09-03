@@ -435,6 +435,26 @@ export class ApiClient {
     return res.json();
   }
 
+  // ---------------------------------------------------------------------------
+  // Cloud Billing & Payments
+  // ---------------------------------------------------------------------------
+  async getBillingPlans(): Promise<any[]> {
+    const res = await fetch(`${this.baseUrl}/api/billing/plans`);
+    if (!res.ok) throw new Error('Failed to load plans');
+    return res.json();
+  }
+
+  async createCheckoutSession(planTier: string): Promise<{ checkout_url: string; session_id: string; plan_tier: string }> {
+    const res = await fetch(`${this.baseUrl}/api/billing/create-checkout-session`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ plan_tier: planTier }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to create checkout session');
+    return data;
+  }
+
   connectProgress(
     onMessage: (event: ProgressEvent) => void,
     onError?: (err: any) => void

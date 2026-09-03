@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import { useMergeApp } from '@/hooks/useMergeApp';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -6,13 +7,19 @@ import { EmptyStateView } from '@/views/EmptyStateView';
 import { ProfileView } from '@/views/ProfileView';
 import { HistoryView } from '@/views/HistoryView';
 import { QueuesView } from '@/views/QueuesView';
-import { AdminView } from '@/views/AdminView';
 import { ProgressSpotlight } from '@/components/merge/ProgressSpotlight';
 import { SuccessModal } from '@/components/merge/SuccessModal';
 import { FloatingActionBar } from '@/components/merge/FloatingActionBar';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { Toast } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
+
+// Compile-time feature flag: completely stripped in client release builds
+const ENABLE_ADMIN = import.meta.env.VITE_ENABLE_ADMIN === 'true';
+
+const AdminView = ENABLE_ADMIN
+  ? React.lazy(() => import('@/views/AdminView').then((m) => ({ default: m.AdminView })))
+  : null;
 
 export function App() {
   const app = useMergeApp();
@@ -31,7 +38,7 @@ export function App() {
         <Sidebar
           activeTab={app.activeTab}
           onTabChange={app.setActiveTab}
-          isAdmin={app.profile?.role === 'admin' || app.profile?.email === 'admin@tubemerge.com'}
+          isAdmin={ENABLE_ADMIN && (app.profile?.role === 'admin' || app.profile?.email === 'admin@tubemerge.com')}
         />
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6 pb-32">
@@ -74,9 +81,11 @@ export function App() {
             />
           )}
 
-          {/* Administrator Console View */}
-          {app.activeTab === 'admin' && (app.profile?.role === 'admin' || app.profile?.email === 'admin@tubemerge.com') && (
-            <AdminView showToast={app.showToast} />
+          {/* Administrator Console View (Exempt from client distribution) */}
+          {ENABLE_ADMIN && AdminView && app.activeTab === 'admin' && (app.profile?.role === 'admin' || app.profile?.email === 'admin@tubemerge.com') && (
+            <Suspense fallback={<div className="p-8 text-center text-xs text-[#888888]">Loading Admin Portal…</div>}>
+              <AdminView showToast={app.showToast} />
+            </Suspense>
           )}
 
           {/* Merge Pipeline Workspace Views */}

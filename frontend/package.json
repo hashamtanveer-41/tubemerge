@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:client": "tsc -b && VITE_ENABLE_ADMIN=false vite build",
+    "build:admin": "tsc -b && VITE_ENABLE_ADMIN=true vite build",
     "preview": "vite preview"
   },
   "dependencies": {
