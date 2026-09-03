@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 import subprocess
 import threading
 import uuid
@@ -90,10 +91,14 @@ class MergeEngine:
         output_dir = Path(self.job_spec.output_dir) if self.job_spec.output_dir else settings.DEFAULT_OUTPUT_DIR
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        out_filename = self.job_spec.output_filename or f"TubeMerge_{job_id}.mp4"
-        if not out_filename.endswith(".mp4"):
-            out_filename += ".mp4"
-        final_output_path = output_dir / out_filename
+        raw_name = self.job_spec.output_filename or f"TubeMerge_{job_id}.mp4"
+        if not raw_name.endswith(".mp4"):
+            raw_name += ".mp4"
+        # Sanitize filename across all filesystems (Windows, Linux, macOS)
+        sanitized_name = re.sub(r'[\\/*?:"<>|]', "_", raw_name).strip()
+        if not sanitized_name or sanitized_name == ".mp4":
+            sanitized_name = f"TubeMerge_{job_id}.mp4"
+        final_output_path = output_dir / sanitized_name
 
         try:
             # 1. Fetch metadata

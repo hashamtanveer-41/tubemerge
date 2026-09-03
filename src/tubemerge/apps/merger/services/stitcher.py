@@ -42,7 +42,15 @@ class VideoStitcherService:
         for title, dur in zip(titles, durations_seconds):
             dur_ms = int(dur * 1000)
             end_ms = current_ms + dur_ms
-            clean_title = title.replace("\n", " ").replace("=", " ").strip()
+            # Escape \, =, ;, #, and newlines according to FFmpeg FFMETADATA1 specification
+            clean_title = (
+                title.replace("\\", "\\\\")
+                .replace("=", "\\=")
+                .replace(";", "\\;")
+                .replace("#", "\\#")
+                .replace("\n", " ")
+                .strip()
+            )
             lines.extend([
                 "",
                 "[CHAPTER]",

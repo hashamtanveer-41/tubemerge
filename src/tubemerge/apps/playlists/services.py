@@ -59,7 +59,11 @@ class PlaylistMetadataService:
             raise RuntimeError("Invalid response received from yt-dlp parser.")
 
         entries = []
-        raw_entries = data.get("entries") or []
+        raw_entries = data.get("entries")
+        if raw_entries is None and data.get("id"):
+            raw_entries = [data]
+        elif raw_entries is None:
+            raw_entries = []
 
         cover_thumb = data.get("thumbnail")
 
