@@ -67,6 +67,7 @@ export interface UserProfile {
   handle: string;
   avatar_url?: string;
   tier?: string;
+  role?: string;
   created_at: string;
 }
 
@@ -131,5 +132,49 @@ export interface QueueItem {
   canvas_preset: string;
   crf: number;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  created_at: string;
+}
+
+export interface AdminStats {
+  total_users: number;
+  active_licenses: number;
+  total_merges: number;
+  total_minutes_processed: number;
+  active_workstations: number;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  handle: string;
+  tier: string;
+  role: string;
+  created_at: string;
+  merge_count: number;
+  active_devices_count: number;
+}
+
+export interface AdminLicense {
+  id: number;
+  user_id?: string;
+  user_email?: string;
+  license_key: string;
+  tier: string;
+  status: string;
+  max_devices: number;
+  active_devices_count: number;
+  created_at: string;
+}
+
+export interface AdminUsageEvent {
+  id: string;
+  user_id?: string;
+  user_email?: string;
+  hardware_id?: string;
+  request_type: string;
+  video_count: number;
+  duration_seconds: number;
+  status: string;
   created_at: string;
 }

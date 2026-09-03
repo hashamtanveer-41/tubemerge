@@ -1,18 +1,20 @@
 import React from 'react';
-import { LayoutGrid, ListVideo, Clock, User, Download, Music } from 'lucide-react';
+import { LayoutGrid, ListVideo, Clock, User, Download, Music, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isAdmin?: boolean;
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, isAdmin = false }: SidebarProps) {
   const navItems = [
     { id: 'merge', label: 'Merge Playlists', icon: LayoutGrid },
     { id: 'queues', label: 'Merge Queues', icon: ListVideo },
     { id: 'history', label: 'History', icon: Clock },
     { id: 'account', label: 'Account', icon: User },
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin Console', icon: ShieldAlert, badge: 'ADMIN' }] : []),
   ];
 
   return (
@@ -27,14 +29,21 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={cn(
-                'w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer text-left',
+                'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer text-left',
                 isActive
                   ? 'bg-[#212121] text-white border-l-4 border-[#FF0000] font-semibold pl-2.5'
                   : 'text-[#AAAAAA] hover:bg-[#181818] hover:text-white'
               )}
             >
-              <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#FF0000]' : 'text-[#888888]')} />
-              <span>{item.label}</span>
+              <div className="flex items-center space-x-3">
+                <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#FF0000]' : item.id === 'admin' ? 'text-red-400' : 'text-[#888888]')} />
+                <span>{item.label}</span>
+              </div>
+              {item.badge && (
+                <span className="text-[9px] font-black tracking-wider bg-brand-red text-white px-1.5 py-0.5 rounded shadow-sm">
+                  {item.badge}
+                </span>
+              )}
             </button>
           );
         })}

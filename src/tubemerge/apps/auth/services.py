@@ -243,6 +243,7 @@ class AuthService:
                 "handle": user_row["handle"],
                 "avatar_url": user_row["avatar_url"],
                 "tier": user_row["tier"],
+                "role": user_row.get("role") or "user",
                 "created_at": user_row["created_at"].strftime("%b %Y") if hasattr(user_row["created_at"], "strftime") else "Sep 2026",
             },
             "plan_tier": lic_row["tier"],
@@ -261,7 +262,7 @@ class AuthService:
             with get_supabase_cursor() as cur:
                 cur.execute(
                     """
-                    SELECT s.user_id, s.expires_at, u.email, u.full_name, u.handle, u.avatar_url, u.tier, u.created_at
+                    SELECT s.user_id, s.expires_at, u.email, u.full_name, u.handle, u.avatar_url, u.tier, u.role, u.created_at
                     FROM public.user_sessions s
                     JOIN public.users u ON s.user_id = u.id
                     WHERE s.token = %s AND s.expires_at > NOW();
@@ -315,6 +316,7 @@ class AuthService:
                 "handle": row["handle"],
                 "avatar_url": row["avatar_url"],
                 "tier": row["tier"],
+                "role": row.get("role") or "user",
                 "created_at": row["created_at"].strftime("%b %Y") if hasattr(row["created_at"], "strftime") else "Sep 2026",
             },
             "plan_tier": plan_tier,

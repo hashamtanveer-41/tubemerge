@@ -20,6 +20,7 @@ class UserResponse(BaseModel):
     handle: str
     avatar_url: Optional[str] = None
     tier: str
+    role: Optional[str] = "user"
     created_at: str
 
 class ActiveDevice(BaseModel):

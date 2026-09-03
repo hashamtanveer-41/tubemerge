@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from tubemerge.apps.licensing.services.license_service import LicenseService
 from tubemerge.apps.licensing.services.telemetry_service import TelemetryService
 from tubemerge.apps.licensing.services.fingerprint_service import FingerprintService
-from tubemerge.apps.auth.services import AuthService
 from tubemerge.apps.licensing.schemas.license_schema import (
     ActivateLicenseRequest,
     LicenseStatusResponse,
@@ -26,6 +25,7 @@ class LicenseController:
         token = cls._extract_token(authorization)
         if token:
             try:
+                from tubemerge.apps.auth.services import AuthService
                 user_info = AuthService.get_current_user(token)
                 return LicenseStatusResponse(
                     status="active",
@@ -66,6 +66,7 @@ class LicenseController:
         token = cls._extract_token(authorization)
         if token:
             try:
+                from tubemerge.apps.auth.services import AuthService
                 user_info = AuthService.get_current_user(token)
                 user = user_info["user"]
                 return UserProfileResponse(
@@ -94,6 +95,7 @@ class LicenseController:
 
         if token:
             try:
+                from tubemerge.apps.auth.services import AuthService
                 user_info = AuthService.get_current_user(token)
                 user_id = user_info["user"]["id"]
                 plan_tier = user_info.get("plan_tier", "COMMUNITY")

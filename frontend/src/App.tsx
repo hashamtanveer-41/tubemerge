@@ -6,6 +6,7 @@ import { EmptyStateView } from '@/views/EmptyStateView';
 import { ProfileView } from '@/views/ProfileView';
 import { HistoryView } from '@/views/HistoryView';
 import { QueuesView } from '@/views/QueuesView';
+import { AdminView } from '@/views/AdminView';
 import { ProgressSpotlight } from '@/components/merge/ProgressSpotlight';
 import { SuccessModal } from '@/components/merge/SuccessModal';
 import { FloatingActionBar } from '@/components/merge/FloatingActionBar';
@@ -27,7 +28,11 @@ export function App() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar activeTab={app.activeTab} onTabChange={app.setActiveTab} />
+        <Sidebar
+          activeTab={app.activeTab}
+          onTabChange={app.setActiveTab}
+          isAdmin={app.profile?.role === 'admin'}
+        />
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6 pb-32">
           {/* Account Profile View */}
@@ -66,6 +71,11 @@ export function App() {
                 app.setActiveTab('merge');
               }}
             />
+          )}
+
+          {/* Administrator Console View */}
+          {app.activeTab === 'admin' && app.profile?.role === 'admin' && (
+            <AdminView showToast={app.showToast} />
           )}
 
           {/* Merge Pipeline Workspace Views */}

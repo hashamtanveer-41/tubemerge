@@ -1,4 +1,19 @@
-import { HealthStatus, Playlist, ProgressEvent, LicenseInfo, UserProfile, UsageMetrics, HistoryItem, QueueItem, AuthResponse, ActiveDevice } from '../types';
+import {
+  HealthStatus,
+  Playlist,
+  ProgressEvent,
+  LicenseInfo,
+  UserProfile,
+  UsageMetrics,
+  HistoryItem,
+  QueueItem,
+  AuthResponse,
+  ActiveDevice,
+  AdminStats,
+  AdminUser,
+  AdminLicense,
+  AdminUsageEvent,
+} from '../types';
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -336,6 +351,88 @@ export class ApiClient {
       throw new Error(data.detail || 'Failed to deactivate device');
     }
     return data;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Administrator Subsystem APIs
+  // ---------------------------------------------------------------------------
+  async adminGetStats(): Promise<AdminStats> {
+    const res = await fetch(`${this.baseUrl}/api/admin/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch admin statistics');
+    return res.json();
+  }
+
+  async adminGetUsers(search?: string): Promise<AdminUser[]> {
+    let url = `${this.baseUrl}/api/admin/users`;
+    if (search && search.trim()) {
+      url += `?search=${encodeURIComponent(search.trim())}`;
+    }
+    const res = await fetch(url, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch users list');
+    return res.json();
+  }
+
+  async adminUpdateUserTier(userId: string, tier: string, role?: string): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/admin/users/${userId}/tier`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ tier, role }),
+    });
+    if (!res.ok) throw new Error('Failed to update user tier');
+    return res.json();
+  }
+
+  async adminResetDevices(userId: string): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/admin/users/${userId}/reset-devices`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to reset user workstations');
+    return res.json();
+  }
+
+  async adminGetLicenses(): Promise<AdminLicense[]> {
+    const res = await fetch(`${this.baseUrl}/api/admin/licenses`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch licenses inventory');
+    return res.json();
+  }
+
+  async adminGenerateLicense(payload: {
+    tier: string;
+    max_devices: number;
+    user_email?: string;
+    notes?: string;
+  }): Promise<AdminLicense> {
+    const res = await fetch(`${this.baseUrl}/api/admin/licenses/generate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to generate license key');
+    return res.json();
+  }
+
+  async adminRevokeLicense(licenseKey: string): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/admin/licenses/${encodeURIComponent(licenseKey)}/revoke`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to revoke license');
+    return res.json();
+  }
+
+  async adminGetAuditLog(limit = 50): Promise<AdminUsageEvent[]> {
+    const res = await fetch(`${this.baseUrl}/api/admin/audit-log?limit=${limit}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch billing audit log');
+    return res.json();
   }
 
   connectProgress(
