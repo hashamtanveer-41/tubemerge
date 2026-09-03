@@ -1,18 +1,91 @@
 import { HealthStatus, Playlist, ProgressEvent, LicenseInfo, UserProfile, UsageMetrics, HistoryItem, QueueItem, AuthResponse, ActiveDevice } from '../types';
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  try {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCookie(name: string, value: string, days = 30): void {
+  if (typeof document === 'undefined') return;
+  try {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  } catch {
+    // Ignore
+  }
+}
+
+function removeCookie(name: string): void {
+  if (typeof document === 'undefined') return;
+  try {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+  } catch {
+    // Ignore
+  }
+}
+
+class SafeStorage {
+  private memoryStore: Record<string, string> = {};
+
+  getItem(key: string): string | null {
+    try {
+      if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage) {
+        const val = window.localStorage.getItem(key);
+        if (val) return val;
+      }
+    } catch {
+      // WebKitGTK / Sandboxed webview fallback
+    }
+    const cookieVal = getCookie(key);
+    if (cookieVal) return cookieVal;
+    return this.memoryStore[key] || null;
+  }
+
+  setItem(key: string, value: string): void {
+    try {
+      if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage) {
+        window.localStorage.setItem(key, value);
+      }
+    } catch {
+      // WebKitGTK fallback
+    }
+    setCookie(key, value);
+    this.memoryStore[key] = value;
+  }
+
+  removeItem(key: string): void {
+    try {
+      if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // WebKitGTK fallback
+    }
+    removeCookie(key);
+    delete this.memoryStore[key];
+  }
+}
+
+const safeStorage = new SafeStorage();
+
 export class ApiClient {
   private baseUrl = '';
 
   getToken(): string | null {
-    return localStorage.getItem('tubemerge_auth_token');
+    return safeStorage.getItem('tubemerge_auth_token');
   }
 
   setToken(token: string): void {
-    localStorage.setItem('tubemerge_auth_token', token);
+    safeStorage.setItem('tubemerge_auth_token', token);
   }
 
   clearToken(): void {
-    localStorage.removeItem('tubemerge_auth_token');
+    safeStorage.removeItem('tubemerge_auth_token');
   }
 
   private getAuthHeaders(): Record<string, string> {
