@@ -9,6 +9,8 @@ from tubemerge.apps.binaries.services import BinaryService
 from tubemerge.apps.merger.models import ProgressSnapshot, PipelineStatus, MergeJobSpecification
 from tubemerge.apps.merger.schemas import StartMergeRequest, StartMergeResponse, CancelResponse
 from tubemerge.apps.merger.services.engine import MergeEngine
+from tubemerge.apps.licensing.services.license_service import LicenseService
+from tubemerge.apps.licensing.services.telemetry_service import TelemetryService
 
 class MergeController:
     def __init__(self):
@@ -23,6 +25,19 @@ class MergeController:
                 detail={"error": "A merge job is already currently running."}
             )
 
+        # 1. Operational Quota Enforcement
+        license_info = LicenseService.get_license_status()
+        is_pro = license_info.get("plan_tier") in ("PRO", "STUDIO", "LIFETIME")
+        daily_limit = 100 if is_pro else 3
+        usage = TelemetryService.get_daily_usage(daily_quota=daily_limit)
+
+        if usage["requests_today"] >= daily_limit:
+            raise HTTPException(
+                status_code=429,
+                detail={"error": f"Daily merge limit reached ({usage['requests_today']}/{daily_limit}). Upgrade to Creator Pro for unlimited merges."}
+            )
+
+        # 2. Binary Validation
         try:
             ffmpeg_p = self.binary_service.get_ffmpeg_path()
             ytdlp_p = self.binary_service.get_ytdlp_path()
@@ -33,6 +48,9 @@ class MergeController:
                 pass
         except FileNotFoundError as exc:
             raise HTTPException(status_code=503, detail={"error": str(exc)})
+
+        # Record merge start request in telemetry
+        TelemetryService.record_request("/api/merger/start-merge", 200)
 
         job_spec = MergeJobSpecification(
             playlist_url=payload.url,
