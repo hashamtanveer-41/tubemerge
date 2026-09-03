@@ -127,7 +127,7 @@ export class ApiClient {
   }): Promise<{ status: string; job_id: string }> {
     const res = await fetch(`${this.baseUrl}/api/start-merge`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.getAuthHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -140,7 +140,7 @@ export class ApiClient {
   }
 
   async cancelMerge(): Promise<void> {
-    await fetch(`${this.baseUrl}/api/cancel`, { method: 'POST' });
+    await fetch(`${this.baseUrl}/api/cancel`, { method: 'POST', headers: this.getAuthHeaders() });
   }
 
   async openFile(path: string): Promise<void> {
@@ -162,7 +162,9 @@ export class ApiClient {
   }
 
   async getLicenseStatus(): Promise<LicenseInfo> {
-    const res = await fetch(`${this.baseUrl}/api/license/status`);
+    const res = await fetch(`${this.baseUrl}/api/license/status`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch license status');
     return res.json();
   }
@@ -170,7 +172,7 @@ export class ApiClient {
   async activateLicense(license_key: string): Promise<LicenseInfo> {
     const res = await fetch(`${this.baseUrl}/api/license/activate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.getAuthHeaders(),
       body: JSON.stringify({ license_key }),
     });
     const data = await res.json();
@@ -184,25 +186,32 @@ export class ApiClient {
   async deactivateLicense(): Promise<LicenseInfo> {
     const res = await fetch(`${this.baseUrl}/api/license/deactivate`, {
       method: 'POST',
+      headers: this.getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Failed to deactivate license');
     return res.json();
   }
 
   async getUserProfile(): Promise<UserProfile> {
-    const res = await fetch(`${this.baseUrl}/api/account/profile`);
+    const res = await fetch(`${this.baseUrl}/api/account/profile`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch profile');
     return res.json();
   }
 
   async getAccountUsage(): Promise<UsageMetrics> {
-    const res = await fetch(`${this.baseUrl}/api/account/usage`);
+    const res = await fetch(`${this.baseUrl}/api/account/usage`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch usage metrics');
     return res.json();
   }
 
   async getHistory(): Promise<HistoryItem[]> {
-    const res = await fetch(`${this.baseUrl}/api/history`);
+    const res = await fetch(`${this.baseUrl}/api/history`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch history');
     return res.json();
   }
@@ -210,6 +219,7 @@ export class ApiClient {
   async deleteHistoryItem(id: number): Promise<void> {
     const res = await fetch(`${this.baseUrl}/api/history/${id}`, {
       method: 'DELETE',
+      headers: this.getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Failed to delete history item');
   }
@@ -217,12 +227,15 @@ export class ApiClient {
   async clearAllHistory(): Promise<void> {
     const res = await fetch(`${this.baseUrl}/api/history`, {
       method: 'DELETE',
+      headers: this.getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Failed to clear history');
   }
 
   async getQueues(): Promise<QueueItem[]> {
-    const res = await fetch(`${this.baseUrl}/api/queues`);
+    const res = await fetch(`${this.baseUrl}/api/queues`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch queues');
     return res.json();
   }

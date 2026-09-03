@@ -11,6 +11,8 @@ from tubemerge.apps.merger.schemas import StartMergeRequest, StartMergeResponse,
 from tubemerge.apps.merger.services.engine import MergeEngine
 from tubemerge.apps.licensing.services.license_service import LicenseService
 from tubemerge.apps.licensing.services.telemetry_service import TelemetryService
+from tubemerge.apps.licensing.services.fingerprint_service import FingerprintService
+from tubemerge.apps.auth.services import AuthService
 
 class MergeController:
     def __init__(self):
@@ -18,18 +20,47 @@ class MergeController:
         self.active_engine: Optional[MergeEngine] = None
         self.progress_queues: List[asyncio.Queue] = []
 
-    async def start_merge(self, payload: StartMergeRequest) -> StartMergeResponse:
+    async def start_merge(
+        self,
+        payload: StartMergeRequest,
+        authorization: Optional[str] = None,
+    ) -> StartMergeResponse:
         if self.active_engine and self.active_engine.is_running:
             raise HTTPException(
                 status_code=409,
                 detail={"error": "A merge job is already currently running."}
             )
 
-        # 1. Operational Quota Enforcement
-        license_info = LicenseService.get_license_status()
-        is_pro = license_info.get("plan_tier") in ("PRO", "STUDIO", "LIFETIME")
-        daily_limit = 100 if is_pro else 3
-        usage = TelemetryService.get_daily_usage(daily_quota=daily_limit)
+        # 1. User Authentication & Operational Quota Enforcement
+        token = None
+        if authorization:
+            parts = authorization.split(" ")
+            token = parts[1] if len(parts) == 2 and parts[0].lower() == "bearer" else authorization
+
+        user_id = None
+        plan_tier = "FREE"
+        if token:
+            try:
+                user_info = AuthService.get_current_user(token)
+                user_id = user_info["user"]["id"]
+                plan_tier = user_info.get("plan_tier", "COMMUNITY")
+            except Exception:
+                pass
+
+        if not user_id:
+            lic = LicenseService.get_license_status()
+            plan_tier = lic.get("plan_tier", "FREE")
+
+        hwid = FingerprintService.get_hardware_id()
+        is_lifetime = (plan_tier == "LIFETIME")
+        is_pro = is_lifetime or (plan_tier in ("PRO", "CREATOR_PRO", "STUDIO"))
+        daily_limit = 1_000_000 if is_lifetime else (100 if is_pro else 3)
+
+        usage = TelemetryService.get_user_usage(
+            user_id=user_id,
+            hardware_id=hwid,
+            daily_quota=daily_limit,
+        )
 
         if usage["requests_today"] >= daily_limit:
             raise HTTPException(
@@ -49,8 +80,15 @@ class MergeController:
         except FileNotFoundError as exc:
             raise HTTPException(status_code=503, detail={"error": str(exc)})
 
-        # Record merge start request in telemetry
-        TelemetryService.record_request("/api/merger/start-merge", 200)
+        # 3. Record billable merge request into Supabase PostgreSQL & SQLite
+        video_count = len(payload.selected_indices) if payload.selected_indices else 1
+        TelemetryService.record_billable_request(
+            user_id=user_id,
+            hardware_id=hwid,
+            request_type="merge_job",
+            video_count=video_count,
+            status="started",
+        )
 
         job_spec = MergeJobSpecification(
             playlist_url=payload.url,

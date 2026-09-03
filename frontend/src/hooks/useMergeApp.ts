@@ -24,40 +24,45 @@ export function useMergeApp() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [license, setLicense] = useState<LicenseInfo>({
-    status: 'active',
-    plan_tier: 'PRO',
-    license_key: 'TM-PRO-8842-7719-2026',
-    expires_at: 'Lifetime License',
-    hardware_id: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    max_devices: 2,
+    status: 'unlicensed',
+    plan_tier: 'FREE',
+    license_key: null,
+    expires_at: null,
+    hardware_id: '',
+    max_devices: 1,
     active_devices: 1,
   });
 
   const [usage, setUsage] = useState<UsageMetrics>({
     requests_today: 0,
-    daily_quota: 100,
-    total_lifetime_merges: 1,
-    total_minutes_processed: 12,
-    quota_reset_in_hours: 14,
+    daily_quota: 3,
+    total_lifetime_merges: 0,
+    total_minutes_processed: 0,
+    quota_reset_in_hours: 24,
   });
 
   useEffect(() => {
     api.getHealth().then(setHealth).catch(() => {});
-    api.getLicenseStatus().then(setLicense).catch(() => {});
-    api.getAccountUsage().then(setUsage).catch(() => {});
 
-    // Check existing Supabase session
+    // Check existing Supabase session first
     api.getAuthMe().then((authData) => {
       if (authData) {
         setProfile(authData.user);
         setActiveDevices(authData.active_devices);
         setLicense((prev) => ({
           ...prev,
+          status: 'active',
           plan_tier: (authData.plan_tier === 'CREATOR_PRO' ? 'PRO' : (authData.plan_tier as any)) || 'PRO',
           max_devices: authData.max_devices,
         }));
       }
-    }).catch(() => {});
+      // Re-fetch usage and license with active auth headers
+      api.getAccountUsage().then(setUsage).catch(() => {});
+      api.getLicenseStatus().then(setLicense).catch(() => {});
+    }).catch(() => {
+      api.getAccountUsage().then(setUsage).catch(() => {});
+      api.getLicenseStatus().then(setLicense).catch(() => {});
+    });
   }, []);
 
   const showToast = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
@@ -145,10 +150,7 @@ export function useMergeApp() {
             setIsMerging(false);
             if (event.output_file) {
               setOutputFile(event.output_file);
-              setUsage((prev) => ({
-                ...prev,
-                total_lifetime_merges: prev.total_lifetime_merges + 1,
-              }));
+              api.getAccountUsage().then(setUsage).catch(() => {});
               showToast('Merge completed successfully!', 'success');
             }
             disconnect();
@@ -204,9 +206,12 @@ export function useMergeApp() {
     setActiveDevices(authData.active_devices);
     setLicense((prev) => ({
       ...prev,
+      status: 'active',
       plan_tier: (authData.plan_tier === 'CREATOR_PRO' ? 'PRO' : (authData.plan_tier as any)) || 'PRO',
       max_devices: authData.max_devices,
     }));
+    api.getAccountUsage().then(setUsage).catch(() => {});
+    api.getLicenseStatus().then(setLicense).catch(() => {});
     showToast(`Welcome, ${authData.user.full_name || authData.user.name}!`, 'success');
   };
 
@@ -214,6 +219,24 @@ export function useMergeApp() {
     await api.logout();
     setProfile(null);
     setActiveDevices([]);
+    setLicense({
+      status: 'unlicensed',
+      plan_tier: 'FREE',
+      license_key: null,
+      expires_at: null,
+      hardware_id: '',
+      max_devices: 1,
+      active_devices: 1,
+    });
+    setUsage({
+      requests_today: 0,
+      daily_quota: 3,
+      total_lifetime_merges: 0,
+      total_minutes_processed: 0,
+      quota_reset_in_hours: 24,
+    });
+    api.getAccountUsage().then(setUsage).catch(() => {});
+    api.getLicenseStatus().then(setLicense).catch(() => {});
     showToast('Signed out of Supabase cloud.', 'info');
   };
 

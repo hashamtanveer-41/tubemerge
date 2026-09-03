@@ -54,6 +54,9 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS request_telemetry (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 endpoint TEXT NOT NULL,
+                request_type TEXT DEFAULT 'merge_job',
+                user_id TEXT,
+                duration_seconds INTEGER DEFAULT 0,
                 status_code INTEGER NOT NULL,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -90,43 +93,9 @@ def init_db() -> None:
             );
         """)
 
-        # Seed default development / community license if empty
-        cur = conn.execute("SELECT COUNT(*) FROM licenses")
-        if cur.fetchone()[0] == 0:
-            conn.execute(
-                """
-                INSERT INTO licenses (key, plan_tier, status, max_devices, expires_at)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                ("TM-PRO-8842-7719-2026", "PRO", "active", 3, "Lifetime License")
-            )
-
-        # Seed initial history demo item if empty
-        cur_h = conn.execute("SELECT COUNT(*) FROM merge_history")
-        if cur_h.fetchone()[0] == 0:
-            conn.execute("""
-                INSERT INTO merge_history (
-                    job_id, playlist_title, playlist_url, channel_name,
-                    video_count, duration_seconds, resolution, output_path,
-                    file_size_bytes, status
-                ) VALUES (
-                    'job_demo_init_01', 'Complete Web Development Bootcamp',
-                    'https://www.youtube.com/playlist?list=PL4cUxeGkcC9gcy9lrvMJLM5U93Y-GpdVn',
-                    'Traversy Media', 14, 4820, '1080p',
-                    '/home/hasham-tanveer/Videos/Complete_Web_Dev.mp4',
-                    1845493760, 'completed'
-                )
-            """)
-
-        # Seed initial queue demo item if empty
-        cur_q = conn.execute("SELECT COUNT(*) FROM merge_queues")
-        if cur_q.fetchone()[0] == 0:
-            conn.execute("""
-                INSERT INTO merge_queues (
-                    playlist_url, playlist_title, channel_name,
-                    video_count, canvas_preset, crf, status
-                ) VALUES (
-                    'https://www.youtube.com/playlist?list=PLillGF-RfqbZ2ybcoD2OamnhcwV0WCj9y',
-                    'Python FastAPI Masterclass', 'Fireship', 8, 'auto', 21, 'pending'
-                )
-            """)
+        # Clean up any leftover demo seed data from previous prototypes
+        conn.execute("DELETE FROM merge_history WHERE job_id = 'job_demo_init_01';")
+        conn.execute("DELETE FROM merge_queues WHERE playlist_title = 'Python FastAPI Masterclass';")
+        conn.execute("DELETE FROM licenses WHERE key = 'TM-PRO-8842-7719-2026';")
+        # Purge non-merge telemetry junk records
+        conn.execute("DELETE FROM request_telemetry WHERE endpoint NOT LIKE '%start-merge%';")

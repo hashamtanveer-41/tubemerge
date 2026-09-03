@@ -324,13 +324,24 @@ class AuthService:
 
     @classmethod
     def logout(cls, token: str) -> bool:
-        """Invalidate session in Supabase cloud."""
+        """Invalidate session in Supabase cloud and clear local license cache."""
         try:
             with get_supabase_cursor() as cur:
                 cur.execute("DELETE FROM public.user_sessions WHERE token = %s;", (token,))
-            return True
         except Exception:
-            return False
+            pass
+
+        # Clear offline Ed25519 license file and local SQLite license records
+        try:
+            CryptoService.remove_license_file()
+            conn = get_db_connection()
+            with conn:
+                conn.execute("DELETE FROM licenses;")
+                conn.execute("DELETE FROM device_activations;")
+        except Exception:
+            pass
+
+        return True
 
     @classmethod
     def deactivate_device(cls, token: str, target_hwid: str) -> Dict[str, Any]:
