@@ -57,7 +57,7 @@ export interface HealthStatus {
   ytdlp: BinaryItem;
 }
 
-export type LicensePlanTier = 'FREE' | 'PRO' | 'STUDIO';
+export type LicensePlanTier = 'FREE' | 'PRO' | 'STUDIO' | 'LIFETIME' | 'CREATOR_PRO';
 
 export interface UserProfile {
   id: string;

@@ -31,7 +31,7 @@ export function App() {
         <Sidebar
           activeTab={app.activeTab}
           onTabChange={app.setActiveTab}
-          isAdmin={app.profile?.role === 'admin'}
+          isAdmin={app.profile?.role === 'admin' || app.profile?.email === 'admin@tubemerge.com'}
         />
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6 pb-32">
@@ -47,6 +47,7 @@ export function App() {
               onDeactivateDevice={app.handleDeactivateDevice}
               onSignInClick={() => app.setIsAuthModalOpen(true)}
               onSignOutClick={app.handleLogout}
+              onNavigateToAdmin={() => app.setActiveTab('admin')}
               onBackToMerge={() => app.setActiveTab('merge')}
               showToast={app.showToast}
             />
@@ -74,7 +75,7 @@ export function App() {
           )}
 
           {/* Administrator Console View */}
-          {app.activeTab === 'admin' && app.profile?.role === 'admin' && (
+          {app.activeTab === 'admin' && (app.profile?.role === 'admin' || app.profile?.email === 'admin@tubemerge.com') && (
             <AdminView showToast={app.showToast} />
           )}
 

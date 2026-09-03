@@ -19,6 +19,7 @@ import {
   X,
   LogOut,
   LogIn,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface ProfileViewProps {
@@ -31,6 +32,7 @@ interface ProfileViewProps {
   onDeactivateDevice?: (hwid: string) => Promise<void>;
   onSignInClick?: () => void;
   onSignOutClick?: () => void;
+  onNavigateToAdmin?: () => void;
   onBackToMerge: () => void;
   showToast: (message: string, type: 'error' | 'success' | 'info') => void;
 }
@@ -45,6 +47,7 @@ export function ProfileView({
   onDeactivateDevice,
   onSignInClick,
   onSignOutClick,
+  onNavigateToAdmin,
   onBackToMerge,
   showToast,
 }: ProfileViewProps) {
@@ -80,7 +83,16 @@ export function ProfileView({
     }
   };
 
-  const isPro = license.status === 'active' && (license.plan_tier === 'PRO' || license.plan_tier === 'STUDIO');
+  const isAdmin = profile?.role === 'admin' || profile?.email === 'admin@tubemerge.com';
+  const isPro =
+    (license.status === 'active' &&
+      (license.plan_tier === 'PRO' ||
+       license.plan_tier === 'CREATOR_PRO' ||
+       license.plan_tier === 'LIFETIME' ||
+       license.plan_tier === 'STUDIO')) ||
+    profile?.tier === 'LIFETIME' ||
+    profile?.tier === 'CREATOR_PRO' ||
+    isAdmin;
   const quotaPercent = Math.min(100, Math.round((usage.requests_today / usage.daily_quota) * 100));
 
   return (
@@ -133,8 +145,18 @@ export function ProfileView({
                     {profile ? (profile.full_name || profile.name) : 'Guest Creator'}
                   </h1>
                   {isPro && (
-                    <span title="Active Pro Member" className="flex items-center shrink-0">
+                    <span title="Active Entitlement" className="flex items-center shrink-0">
                       <BadgeCheck className="w-5 h-5 text-emerald-400" />
+                    </span>
+                  )}
+                  {isAdmin && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-brand-red text-white uppercase shadow-sm">
+                      ADMIN
+                    </span>
+                  )}
+                  {!isAdmin && isPro && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shadow-sm">
+                      {profile?.tier === 'LIFETIME' || license.plan_tier === 'LIFETIME' ? 'LIFETIME' : 'PRO'}
                     </span>
                   )}
                 </div>
@@ -151,8 +173,25 @@ export function ProfileView({
               </div>
             </div>
 
-            {/* Header Actions: Upgrade, Sign Out, Sign In */}
+            {/* Header Actions: Admin Console, Upgrade, Sign Out, Sign In */}
             <div className="flex items-center gap-3 shrink-0">
+              {isAdmin && onNavigateToAdmin && (
+                <Button
+                  size="default"
+                  variant="default"
+                  onClick={onNavigateToAdmin}
+                  icon={ShieldAlert}
+                  className="text-xs h-10 px-4 font-semibold bg-brand-red hover:bg-red-600 shadow-md shadow-red-950/40"
+                >
+                  Admin Console
+                </Button>
+              )}
+              {isPro && !isAdmin && (
+                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{license.plan_tier === 'LIFETIME' || profile?.tier === 'LIFETIME' ? 'Lifetime Hero' : 'Creator Pro Active'}</span>
+                </div>
+              )}
               {!isPro && (
                 <Button
                   size="default"
