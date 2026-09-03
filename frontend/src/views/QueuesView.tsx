@@ -1,0 +1,194 @@
+import React, { useEffect, useState } from 'react';
+import { api } from '@/services/api';
+import { QueueItem } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  ListVideo,
+  Play,
+  Trash2,
+  Plus,
+  Clock,
+  Layers,
+  Sparkles,
+  CheckCircle2,
+} from 'lucide-react';
+
+interface QueuesViewProps {
+  onStartMergeUrl: (url: string) => void;
+}
+
+export function QueuesView({ onStartMergeUrl }: QueuesViewProps) {
+  const [queues, setQueues] = useState<QueueItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newUrl, setNewUrl] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const fetchQueues = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getQueues();
+      setQueues(data);
+    } catch (err) {
+      console.error('Failed to load merge queues:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQueues();
+  }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUrl.trim() || adding) return;
+    try {
+      setAdding(true);
+      const item = await api.enqueuePlaylist({
+        playlist_url: newUrl.trim(),
+        playlist_title: 'Queued Playlist',
+      });
+      setQueues((prev) => [...prev, item as QueueItem]);
+      setNewUrl('');
+    } catch (err) {
+      console.error('Failed to add to queue:', err);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      setDeletingId(id);
+      await api.deleteQueueItem(id);
+      setQueues((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error('Failed to delete queue item:', err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-3">
+        <Spinner size="lg" variant="red" />
+        <p className="text-xs text-[#888888]">Loading SQLite merge queues…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6 select-none animate-in fade-in duration-200 pb-16">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#242424]">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2.5">
+            <ListVideo className="w-6 h-6 text-brand-red" />
+            Merge Queues
+          </h1>
+          <p className="text-xs text-[#888888] mt-1">
+            Queue multiple playlists for automated batch processing.
+          </p>
+        </div>
+      </div>
+
+      {/* Quick Enqueue Bar */}
+      <form onSubmit={handleAdd} className="flex gap-3">
+        <input
+          type="text"
+          value={newUrl}
+          onChange={(e) => setNewUrl(e.target.value)}
+          placeholder="Paste YouTube playlist URL to queue for batch merging..."
+          className="flex-1 h-11 px-4 rounded-xl bg-[#161616] border border-[#262626] text-xs text-white placeholder-[#666666] focus:outline-none focus:border-brand-red transition-colors"
+        />
+        <Button
+          type="submit"
+          variant="default"
+          size="default"
+          loading={adding}
+          disabled={!newUrl.trim()}
+          icon={Plus}
+          className="h-11 px-5 font-semibold text-xs rounded-xl shrink-0"
+        >
+          Add to Queue
+        </Button>
+      </form>
+
+      {/* Empty State */}
+      {queues.length === 0 ? (
+        <div className="rounded-3xl border border-[#282828] bg-[#141414] p-12 text-center space-y-4 max-w-xl mx-auto shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-[#1E1E1E] border border-[#303030] flex items-center justify-center text-[#888888] mx-auto">
+            <ListVideo className="w-8 h-8 text-[#666666]" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="text-lg font-bold text-white">No Playlists in Queue</h3>
+            <p className="text-xs text-[#888888]">
+              Add playlists above to queue them for continuous merging.
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* Queue Item Cards */
+        <div className="space-y-3">
+          {queues.map((item, index) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-[#262626] bg-[#161616] hover:bg-[#1A1A1A] p-4 sm:p-5 transition-all duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4"
+            >
+              <div className="flex items-start gap-4 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-[#222222] border border-[#2E2E2E] flex items-center justify-center text-white font-bold text-xs shrink-0">
+                  #{index + 1}
+                </div>
+
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-bold text-white truncate">
+                      {item.playlist_title}
+                    </h3>
+                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/40 border border-amber-900/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {item.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#888888] font-mono truncate max-w-xl">
+                    {item.playlist_url}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onStartMergeUrl(item.playlist_url)}
+                  icon={Play}
+                  className="h-9 px-4 text-xs font-semibold rounded-xl"
+                >
+                  Start Merge
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="w-9 h-9 rounded-xl border border-[#2E2E2E] hover:border-red-500/50 flex items-center justify-center text-[#666666] hover:text-red-400 transition-colors cursor-pointer"
+                  title="Remove from queue"
+                >
+                  {deletingId === item.id ? (
+                    <Spinner size="sm" variant="red" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

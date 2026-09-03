@@ -1,4 +1,4 @@
-import { HealthStatus, Playlist, ProgressEvent, LicenseInfo, UserProfile, UsageMetrics } from '../types';
+import { HealthStatus, Playlist, ProgressEvent, LicenseInfo, UserProfile, UsageMetrics, HistoryItem, QueueItem } from '../types';
 
 export class ApiClient {
   private baseUrl = '';
@@ -103,6 +103,55 @@ export class ApiClient {
     const res = await fetch(`${this.baseUrl}/api/account/usage`);
     if (!res.ok) throw new Error('Failed to fetch usage metrics');
     return res.json();
+  }
+
+  async getHistory(): Promise<HistoryItem[]> {
+    const res = await fetch(`${this.baseUrl}/api/history`);
+    if (!res.ok) throw new Error('Failed to fetch history');
+    return res.json();
+  }
+
+  async deleteHistoryItem(id: number): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/history/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete history item');
+  }
+
+  async clearAllHistory(): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/history`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to clear history');
+  }
+
+  async getQueues(): Promise<QueueItem[]> {
+    const res = await fetch(`${this.baseUrl}/api/queues`);
+    if (!res.ok) throw new Error('Failed to fetch queues');
+    return res.json();
+  }
+
+  async enqueuePlaylist(item: {
+    playlist_url: string;
+    playlist_title?: string;
+    channel_name?: string;
+    video_count?: number;
+    canvas_preset?: string;
+  }): Promise<QueueItem> {
+    const res = await fetch(`${this.baseUrl}/api/queues`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    if (!res.ok) throw new Error('Failed to enqueue playlist');
+    return res.json();
+  }
+
+  async deleteQueueItem(id: number): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/queues/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete queue item');
   }
 
   connectProgress(

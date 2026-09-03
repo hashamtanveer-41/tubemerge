@@ -85,3 +85,33 @@ export interface UsageMetrics {
   total_minutes_processed: number;
   quota_reset_in_hours: number;
 }
+
+export interface HistoryItem {
+  id: number;
+  job_id: string;
+  playlist_title: string;
+  playlist_url: string;
+  channel_name: string;
+  video_count: number;
+  duration_seconds: number;
+  duration_formatted: string;
+  resolution: string;
+  output_path: string;
+  file_size_bytes: number;
+  file_size_formatted: string;
+  status: string;
+  created_at: string;
+  file_exists: boolean;
+}
+
+export interface QueueItem {
+  id: number;
+  playlist_url: string;
+  playlist_title: string;
+  channel_name: string;
+  video_count: number;
+  canvas_preset: string;
+  crf: number;
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  created_at: string;
+}

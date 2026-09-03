@@ -4,6 +4,8 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { DiscoveryView } from '@/views/DiscoveryView';
 import { EmptyStateView } from '@/views/EmptyStateView';
 import { ProfileView } from '@/views/ProfileView';
+import { HistoryView } from '@/views/HistoryView';
+import { QueuesView } from '@/views/QueuesView';
 import { ProgressSpotlight } from '@/components/merge/ProgressSpotlight';
 import { SuccessModal } from '@/components/merge/SuccessModal';
 import { FloatingActionBar } from '@/components/merge/FloatingActionBar';
@@ -38,8 +40,29 @@ export function App() {
             />
           )}
 
+          {/* Merge History View */}
+          {app.activeTab === 'history' && (
+            <HistoryView
+              onReMerge={(url) => {
+                app.searchPlaylist(url);
+                app.setActiveTab('merge');
+              }}
+              onNavigateToMerge={() => app.setActiveTab('merge')}
+            />
+          )}
+
+          {/* Merge Queues View */}
+          {app.activeTab === 'queues' && (
+            <QueuesView
+              onStartMergeUrl={(url) => {
+                app.searchPlaylist(url);
+                app.setActiveTab('merge');
+              }}
+            />
+          )}
+
           {/* Merge Pipeline Workspace Views */}
-          {app.activeTab !== 'account' && (
+          {app.activeTab === 'merge' && (
             <>
               {app.isMerging && (
                 app.progress ? (
