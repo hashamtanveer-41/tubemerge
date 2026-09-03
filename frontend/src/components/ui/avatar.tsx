@@ -4,10 +4,11 @@ import { CircleUserRound } from 'lucide-react';
 
 interface AvatarProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   src?: string;
+  initials?: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function Avatar({ src, size = 'md', className, ...props }: AvatarProps) {
+export function Avatar({ src, initials, size = 'md', className, ...props }: AvatarProps) {
   const sizeClasses = {
     sm: 'w-7 h-7',
     md: 'w-8 h-8',
@@ -33,6 +34,8 @@ export function Avatar({ src, size = 'md', className, ...props }: AvatarProps) {
     >
       {src ? (
         <img src={src} alt="User" className="w-full h-full object-cover" />
+      ) : initials ? (
+        <span className="text-xs font-bold text-white tracking-wider">{initials}</span>
       ) : (
         <CircleUserRound
           className={cn(

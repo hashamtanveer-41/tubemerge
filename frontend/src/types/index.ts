@@ -61,11 +61,28 @@ export type LicensePlanTier = 'FREE' | 'PRO' | 'STUDIO';
 
 export interface UserProfile {
   id: string;
-  name: string;
+  name?: string;
+  full_name?: string;
   email: string;
   handle: string;
   avatar_url?: string;
+  tier?: string;
   created_at: string;
+}
+
+export interface ActiveDevice {
+  hardware_id: string;
+  device_name: string;
+  activated_at: string;
+  is_current: boolean;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: UserProfile;
+  plan_tier: string;
+  max_devices: number;
+  active_devices: ActiveDevice[];
 }
 
 export interface LicenseInfo {

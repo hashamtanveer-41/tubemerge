@@ -9,6 +9,7 @@ import { QueuesView } from '@/views/QueuesView';
 import { ProgressSpotlight } from '@/components/merge/ProgressSpotlight';
 import { SuccessModal } from '@/components/merge/SuccessModal';
 import { FloatingActionBar } from '@/components/merge/FloatingActionBar';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { Toast } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -20,6 +21,8 @@ export function App() {
       <Header
         onSearch={app.searchPlaylist}
         loading={app.fetching}
+        user={app.profile}
+        onSignInClick={() => app.setIsAuthModalOpen(true)}
         onAccountClick={() => app.setActiveTab('account')}
       />
 
@@ -33,8 +36,12 @@ export function App() {
               profile={app.profile}
               license={app.license}
               usage={app.usage}
+              activeDevices={app.activeDevices}
               onActivateKey={app.activateLicense}
               onDeactivateKey={app.deactivateLicense}
+              onDeactivateDevice={app.handleDeactivateDevice}
+              onSignInClick={() => app.setIsAuthModalOpen(true)}
+              onSignOutClick={app.handleLogout}
               onBackToMerge={() => app.setActiveTab('merge')}
               showToast={app.showToast}
             />
@@ -119,6 +126,13 @@ export function App() {
 
       {/* Floating Modern Toast Notification */}
       <Toast toast={app.toast} onDismiss={app.dismissToast} />
+
+      {/* Supabase Cloud Authentication Modal */}
+      <AuthModal
+        isOpen={app.isAuthModalOpen}
+        onClose={() => app.setIsAuthModalOpen(false)}
+        onSuccess={app.onAuthSuccess}
+      />
     </div>
   );
 }

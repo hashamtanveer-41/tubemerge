@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
-import { Playlist, HealthStatus, ProgressEvent, UserProfile, LicenseInfo, UsageMetrics } from '@/types';
+import { Playlist, HealthStatus, ProgressEvent, UserProfile, LicenseInfo, UsageMetrics, ActiveDevice, AuthResponse } from '@/types';
 import { ToastData } from '@/components/ui/toast';
 
 export function useMergeApp() {
@@ -16,14 +16,12 @@ export function useMergeApp() {
   const [progress, setProgress] = useState<ProgressEvent | null>(null);
   const [outputFile, setOutputFile] = useState<string | null>(null);
 
+  // Auth & Cloud Workstations State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [activeDevices, setActiveDevices] = useState<ActiveDevice[]>([]);
+
   // Profile, License & Usage Telemetry State
-  const [profile, setProfile] = useState<UserProfile>({
-    id: 'usr_creator_01',
-    name: 'TubeMerge Creator',
-    email: 'creator@videoplaylistmerger.com',
-    handle: '@creator.tubemerge',
-    created_at: 'Sep 2026',
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [license, setLicense] = useState<LicenseInfo>({
     status: 'active',
@@ -31,15 +29,15 @@ export function useMergeApp() {
     license_key: 'TM-PRO-8842-7719-2026',
     expires_at: 'Lifetime License',
     hardware_id: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    max_devices: 3,
+    max_devices: 2,
     active_devices: 1,
   });
 
   const [usage, setUsage] = useState<UsageMetrics>({
-    requests_today: 4,
+    requests_today: 0,
     daily_quota: 100,
-    total_lifetime_merges: 18,
-    total_minutes_processed: 142,
+    total_lifetime_merges: 1,
+    total_minutes_processed: 12,
     quota_reset_in_hours: 14,
   });
 
@@ -47,7 +45,19 @@ export function useMergeApp() {
     api.getHealth().then(setHealth).catch(() => {});
     api.getLicenseStatus().then(setLicense).catch(() => {});
     api.getAccountUsage().then(setUsage).catch(() => {});
-    api.getUserProfile().then(setProfile).catch(() => {});
+
+    // Check existing Supabase session
+    api.getAuthMe().then((authData) => {
+      if (authData) {
+        setProfile(authData.user);
+        setActiveDevices(authData.active_devices);
+        setLicense((prev) => ({
+          ...prev,
+          plan_tier: (authData.plan_tier === 'CREATOR_PRO' ? 'PRO' : (authData.plan_tier as any)) || 'PRO',
+          max_devices: authData.max_devices,
+        }));
+      }
+    }).catch(() => {});
   }, []);
 
   const showToast = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
@@ -189,6 +199,34 @@ export function useMergeApp() {
     }
   };
 
+  const onAuthSuccess = (authData: AuthResponse) => {
+    setProfile(authData.user);
+    setActiveDevices(authData.active_devices);
+    setLicense((prev) => ({
+      ...prev,
+      plan_tier: (authData.plan_tier === 'CREATOR_PRO' ? 'PRO' : (authData.plan_tier as any)) || 'PRO',
+      max_devices: authData.max_devices,
+    }));
+    showToast(`Welcome, ${authData.user.full_name || authData.user.name}!`, 'success');
+  };
+
+  const handleLogout = async () => {
+    await api.logout();
+    setProfile(null);
+    setActiveDevices([]);
+    showToast('Signed out of Supabase cloud.', 'info');
+  };
+
+  const handleDeactivateDevice = async (hwid: string) => {
+    try {
+      const updated = await api.deactivateDevice(hwid);
+      setActiveDevices(updated.active_devices);
+      showToast('Workstation slot deactivated successfully.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to deactivate workstation.', 'error');
+    }
+  };
+
   const reset = () => {
     setPlaylist(null);
     setSelectedIndices(new Set());
@@ -224,6 +262,12 @@ export function useMergeApp() {
     profile,
     license,
     usage,
+    activeDevices,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    onAuthSuccess,
+    handleLogout,
+    handleDeactivateDevice,
     activateLicense,
     deactivateLicense,
     searchPlaylist,

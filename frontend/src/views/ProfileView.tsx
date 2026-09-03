@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserProfile, LicenseInfo, UsageMetrics } from '@/types';
+import { UserProfile, LicenseInfo, UsageMetrics, ActiveDevice } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -17,14 +17,20 @@ import {
   Clock,
   Lock,
   X,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 
 interface ProfileViewProps {
-  profile: UserProfile;
+  profile: UserProfile | null;
   license: LicenseInfo;
   usage: UsageMetrics;
+  activeDevices?: ActiveDevice[];
   onActivateKey: (key: string) => Promise<boolean>;
   onDeactivateKey: () => Promise<boolean>;
+  onDeactivateDevice?: (hwid: string) => Promise<void>;
+  onSignInClick?: () => void;
+  onSignOutClick?: () => void;
   onBackToMerge: () => void;
   showToast: (message: string, type: 'error' | 'success' | 'info') => void;
 }
@@ -33,8 +39,12 @@ export function ProfileView({
   profile,
   license,
   usage,
+  activeDevices = [],
   onActivateKey,
   onDeactivateKey,
+  onDeactivateDevice,
+  onSignInClick,
+  onSignOutClick,
   onBackToMerge,
   showToast,
 }: ProfileViewProps) {
@@ -108,7 +118,7 @@ export function ProfileView({
             <div className="flex items-center gap-5 sm:gap-6">
               <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full border-2 border-[#303030] bg-[#242424] flex items-center justify-center text-white shrink-0 shadow-md relative overflow-hidden">
                 <span className="text-2xl sm:text-3xl font-bold text-white">
-                  {profile.name.charAt(0).toUpperCase()}
+                  {profile ? (profile.full_name || profile.name || 'C').charAt(0).toUpperCase() : 'G'}
                 </span>
                 {isPro && (
                   <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#181818] flex items-center justify-center text-white" title="Verified License">
@@ -120,7 +130,7 @@ export function ProfileView({
               <div className="space-y-1.5 min-w-0">
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
-                    {profile.name}
+                    {profile ? (profile.full_name || profile.name) : 'Guest Creator'}
                   </h1>
                   {isPro && (
                     <span title="Active Pro Member" className="flex items-center shrink-0">
@@ -129,21 +139,21 @@ export function ProfileView({
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-[#888888]">
-                  <span>{profile.handle}</span>
+                  <span>{profile ? profile.handle : '@guest.tubemerge'}</span>
                   <span className="text-[#555555]">·</span>
-                  <span>{profile.email}</span>
+                  <span>{profile ? profile.email : 'Unregistered Workstation'}</span>
                   <span className="text-[#555555]">·</span>
                   <span className="flex items-center gap-1 text-[#666666]">
                     <Calendar className="w-3 h-3" />
-                    Joined {profile.created_at}
+                    Joined {profile ? profile.created_at : 'Sep 2026'}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Header Action - Only show upgrade if on free tier */}
-            {!isPro && (
-              <div className="flex items-center gap-3 shrink-0">
+            {/* Header Actions: Upgrade, Sign Out, Sign In */}
+            <div className="flex items-center gap-3 shrink-0">
+              {!isPro && (
                 <Button
                   size="default"
                   variant="default"
@@ -153,8 +163,29 @@ export function ProfileView({
                 >
                   Upgrade to Pro
                 </Button>
-              </div>
-            )}
+              )}
+              {profile ? (
+                <Button
+                  size="default"
+                  variant="outline"
+                  onClick={onSignOutClick}
+                  icon={LogOut}
+                  className="text-xs h-10 px-4 font-semibold border-[#333333] hover:border-red-500/50 hover:text-red-400"
+                >
+                  Sign Out
+                </Button>
+              ) : (
+                <Button
+                  size="default"
+                  variant="outline"
+                  onClick={onSignInClick}
+                  icon={LogIn}
+                  className="text-xs h-10 px-4 font-semibold border-blue-500/60 text-blue-400 hover:bg-blue-500/10"
+                >
+                  Sign In
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Persistent YouTube-Style Navigation Tabs */}
@@ -447,6 +478,54 @@ export function ProfileView({
               )}
             </div>
           </div>
+
+          {/* Connected Workstations (2-Device Node-Locking from Supabase) */}
+          {activeDevices && activeDevices.length > 0 && (
+            <div className="rounded-2xl border border-[#2E2E2E] bg-[#181818] p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-brand-red" />
+                  <span>Connected Workstations ({activeDevices.length} / 2 Slots Used)</span>
+                </h4>
+                <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-900/50 px-2.5 py-0.5 rounded-full">
+                  Supabase Node-Locked
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {activeDevices.map((dev) => (
+                  <div
+                    key={dev.hardware_id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#121212] border border-[#262626] text-xs"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white text-sm">{dev.device_name}</span>
+                        {dev.is_current && (
+                          <span className="text-[10px] bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                            Current Machine
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-mono text-[#666666] truncate max-w-md">
+                        HWID: {dev.hardware_id} · Activated {dev.activated_at}
+                      </p>
+                    </div>
+
+                    {!dev.is_current && onDeactivateDevice && (
+                      <button
+                        type="button"
+                        onClick={() => onDeactivateDevice(dev.hardware_id)}
+                        className="text-xs text-red-400 hover:text-red-300 font-semibold px-3 py-1.5 rounded-lg border border-red-900/40 hover:bg-red-950/40 transition-colors cursor-pointer self-start sm:self-auto"
+                      >
+                        Deactivate Slot
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* License Activation Form DOWN BELOW (Clean & Short) */}
           <div className="rounded-2xl border border-[#2E2E2E] bg-[#181818] p-5 space-y-3">

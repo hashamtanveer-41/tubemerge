@@ -3,13 +3,18 @@ import { Search, Settings, Bell } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Avatar } from '@/components/ui/avatar';
 
+import { UserProfile } from '@/types';
+import { User as UserIcon } from 'lucide-react';
+
 interface HeaderProps {
   onSearch: (url: string) => void;
   loading: boolean;
+  user?: UserProfile | null;
+  onSignInClick?: () => void;
   onAccountClick?: () => void;
 }
 
-export function Header({ onSearch, loading, onAccountClick }: HeaderProps) {
+export function Header({ onSearch, loading, user, onSignInClick, onAccountClick }: HeaderProps) {
   const [url, setUrl] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -81,7 +86,27 @@ export function Header({ onSearch, loading, onAccountClick }: HeaderProps) {
           <span className="w-2 h-2 rounded-full bg-brand-red absolute top-2 right-2 border-2 border-theme-base" />
         </button>
 
-        <Avatar size="md" onClick={onAccountClick} title="Open Account & Profile" />
+        {user ? (
+          <Avatar
+            size="md"
+            initials={
+              (user.full_name || user.name)
+                ? (user.full_name || user.name)!.substring(0, 2).toUpperCase()
+                : 'CR'
+            }
+            onClick={onAccountClick}
+            title={`${user.full_name || user.name} (${user.handle})`}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={onSignInClick}
+            className="h-9 px-3.5 rounded-full border border-blue-500/60 hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <UserIcon className="w-3.5 h-3.5" />
+            <span>Sign in</span>
+          </button>
+        )}
       </div>
     </header>
   );
