@@ -246,6 +246,25 @@ class MergeEngine:
 
             # 7. Finalize & Complete
             safe_remove_directory(temp_dir)
+
+            try:
+                import uuid
+                from tubemerge.apps.history.services import HistoryService
+                total_dur = int(sum(durations))
+                res_str = f"{target_h}p" if target_h <= 1080 else ("4K 60FPS" if target_h <= 2160 else "8K")
+                HistoryService.add_history_entry(
+                    job_id=str(uuid.uuid4()),
+                    playlist_title=playlist.title or "Merged Playlist",
+                    playlist_url=self.job_spec.playlist_url,
+                    channel_name=playlist.channel or "YouTube Creator",
+                    video_count=len(titles_success),
+                    duration_seconds=total_dur,
+                    resolution=res_str,
+                    output_path=str(final_output_path),
+                )
+            except Exception:
+                pass
+
             self._emit(ProgressSnapshot(
                 status=PipelineStatus.DONE,
                 overall_percent=100.0,

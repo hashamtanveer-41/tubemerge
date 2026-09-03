@@ -15,6 +15,8 @@ from tubemerge.apps.playlists.routes import router as playlists_router
 from tubemerge.apps.merger.routes import router as merger_router
 from tubemerge.apps.system.routes import router as system_router
 from tubemerge.apps.licensing import licensing_router
+from tubemerge.apps.history.routes import router as history_router
+from tubemerge.apps.queues.routes import router as queues_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,6 +50,8 @@ def create_app() -> FastAPI:
     app.include_router(merger_router)
     app.include_router(system_router)
     app.include_router(licensing_router)
+    app.include_router(history_router)
+    app.include_router(queues_router)
 
     # Mount static assets (logo.png)
     assets_dir = settings.PROJECT_ROOT / "assets"

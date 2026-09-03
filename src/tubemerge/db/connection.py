@@ -59,6 +59,37 @@ def init_db() -> None:
             );
         """)
 
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS merge_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id TEXT UNIQUE,
+                playlist_title TEXT NOT NULL,
+                playlist_url TEXT NOT NULL,
+                channel_name TEXT,
+                video_count INTEGER NOT NULL,
+                duration_seconds INTEGER DEFAULT 0,
+                resolution TEXT DEFAULT '1080p',
+                output_path TEXT NOT NULL,
+                file_size_bytes INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'completed',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS merge_queues (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                playlist_url TEXT NOT NULL,
+                playlist_title TEXT,
+                channel_name TEXT,
+                video_count INTEGER DEFAULT 0,
+                canvas_preset TEXT DEFAULT 'auto',
+                crf INTEGER DEFAULT 21,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
         # Seed default development / community license if empty
         cur = conn.execute("SELECT COUNT(*) FROM licenses")
         if cur.fetchone()[0] == 0:
@@ -69,3 +100,33 @@ def init_db() -> None:
                 """,
                 ("TM-PRO-8842-7719-2026", "PRO", "active", 3, "Lifetime License")
             )
+
+        # Seed initial history demo item if empty
+        cur_h = conn.execute("SELECT COUNT(*) FROM merge_history")
+        if cur_h.fetchone()[0] == 0:
+            conn.execute("""
+                INSERT INTO merge_history (
+                    job_id, playlist_title, playlist_url, channel_name,
+                    video_count, duration_seconds, resolution, output_path,
+                    file_size_bytes, status
+                ) VALUES (
+                    'job_demo_init_01', 'Complete Web Development Bootcamp',
+                    'https://www.youtube.com/playlist?list=PL4cUxeGkcC9gcy9lrvMJLM5U93Y-GpdVn',
+                    'Traversy Media', 14, 4820, '1080p',
+                    '/home/hasham-tanveer/Videos/Complete_Web_Dev.mp4',
+                    1845493760, 'completed'
+                )
+            """)
+
+        # Seed initial queue demo item if empty
+        cur_q = conn.execute("SELECT COUNT(*) FROM merge_queues")
+        if cur_q.fetchone()[0] == 0:
+            conn.execute("""
+                INSERT INTO merge_queues (
+                    playlist_url, playlist_title, channel_name,
+                    video_count, canvas_preset, crf, status
+                ) VALUES (
+                    'https://www.youtube.com/playlist?list=PLillGF-RfqbZ2ybcoD2OamnhcwV0WCj9y',
+                    'Python FastAPI Masterclass', 'Fireship', 8, 'auto', 21, 'pending'
+                )
+            """)
