@@ -1,0 +1,1 @@
+"""Binaries management app."""
