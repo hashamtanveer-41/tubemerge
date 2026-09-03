@@ -1,0 +1,1 @@
+"""Merger application package."""
