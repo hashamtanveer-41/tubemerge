@@ -98,6 +98,7 @@ export interface LicenseInfo {
 export interface UsageMetrics {
   requests_today: number;
   daily_quota: number;
+  quota_period?: 'week' | 'day';
   total_lifetime_merges: number;
   total_minutes_processed: number;
   quota_reset_in_hours: number;

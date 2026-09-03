@@ -54,18 +54,21 @@ class MergeController:
         hwid = FingerprintService.get_hardware_id()
         is_lifetime = (plan_tier == "LIFETIME")
         is_pro = is_lifetime or (plan_tier in ("PRO", "CREATOR_PRO", "STUDIO"))
-        daily_limit = 1_000_000 if is_lifetime else (100 if is_pro else 3)
+        is_weekly = not is_pro
+        quota_limit = 1_000_000 if is_lifetime else (100 if is_pro else 3)
 
         usage = TelemetryService.get_user_usage(
             user_id=user_id,
             hardware_id=hwid,
-            daily_quota=daily_limit,
+            daily_quota=quota_limit,
+            is_weekly=is_weekly,
         )
 
-        if usage["requests_today"] >= daily_limit:
+        if usage["requests_today"] >= quota_limit:
+            period_label = "week" if is_weekly else "day"
             raise HTTPException(
                 status_code=429,
-                detail={"error": f"Daily merge limit reached ({usage['requests_today']}/{daily_limit}). Upgrade to Creator Pro for unlimited merges."}
+                detail={"error": f"Merge limit reached ({usage['requests_today']}/{quota_limit} playlists per {period_label}). Upgrade to Creator Pro or Lifetime for unlimited merges."}
             )
 
         # 2. Binary Validation

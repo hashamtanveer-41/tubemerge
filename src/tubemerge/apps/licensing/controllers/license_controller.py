@@ -104,15 +104,16 @@ class LicenseController:
             lic = LicenseService.get_license_status()
             plan_tier = lic.get("plan_tier", "FREE")
 
-        daily_quota = (
-            1_000_000 if plan_tier == "LIFETIME"
-            else (100 if plan_tier in ("PRO", "CREATOR_PRO", "STUDIO") else 3)
-        )
+        is_lifetime = (plan_tier == "LIFETIME")
+        is_pro = is_lifetime or (plan_tier in ("PRO", "CREATOR_PRO", "STUDIO"))
+        is_weekly = not is_pro
+        daily_quota = 1_000_000 if is_lifetime else (100 if is_pro else 3)
 
         hwid = FingerprintService.get_hardware_id()
         usage_dict = TelemetryService.get_user_usage(
             user_id=user_id,
             hardware_id=hwid,
             daily_quota=daily_quota,
+            is_weekly=is_weekly,
         )
         return UsageMetricsResponse(**usage_dict)

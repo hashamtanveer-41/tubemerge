@@ -240,12 +240,12 @@ export function ProfileView({
               {/* Stat 1 */}
               <div className="space-y-1 pr-4">
                 <div className="flex items-center justify-between text-xs text-[#888888]">
-                  <span>Daily Requests</span>
+                  <span>{usage.quota_period === 'week' ? 'Weekly Playlists' : 'Daily Requests'}</span>
                   <Activity className="w-3.5 h-3.5 text-brand-red" />
                 </div>
                 <div className="flex items-baseline gap-1.5 pt-1">
                   <span className="text-2xl font-bold text-white">{usage.requests_today}</span>
-                  <span className="text-xs text-[#666666]">/ {usage.daily_quota}</span>
+                  <span className="text-xs text-[#666666]">/ {usage.daily_quota} {usage.quota_period === 'week' ? 'this week' : 'today'}</span>
                 </div>
                 <div className="w-full bg-[#242424] rounded-full h-1 mt-2 overflow-hidden">
                   <div
@@ -325,7 +325,7 @@ export function ProfileView({
                   </li>
                   <li className="flex items-center gap-2.5 text-[#888888]">
                     <X className="w-3.5 h-3.5 text-red-400 shrink-0 stroke-[2.5]" />
-                    <span>2–3 merges / day limit</span>
+                    <span>3 playlists / week limit</span>
                   </li>
                   <li className="flex items-center gap-2.5 text-[#888888]">
                     <X className="w-3.5 h-3.5 text-red-400 shrink-0 stroke-[2.5]" />
@@ -577,16 +577,20 @@ export function ProfileView({
         <div className="space-y-4 animate-in fade-in duration-150">
           <div className="rounded-2xl border border-[#282828] bg-[#181818] p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Daily Merging Limit</h3>
+              <h3 className="text-sm font-semibold text-white">
+                {usage.quota_period === 'week' ? 'Weekly Playlist Limit (3 / Week)' : 'Daily Merging Limit'}
+              </h3>
               <span className="text-xs text-[#777777]">
-                Resets in {usage.quota_reset_in_hours} hours
+                Resets in {usage.quota_period === 'week' ? `${Math.max(1, Math.ceil(usage.quota_reset_in_hours / 24))} days` : `${usage.quota_reset_in_hours} hours`}
               </span>
             </div>
 
             {/* Quota Progress Meter */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-[#888888]">Requests Used</span>
+                <span className="text-[#888888]">
+                  {usage.quota_period === 'week' ? 'Playlists Merged This Week' : 'Requests Used Today'}
+                </span>
                 <span className="text-white font-semibold">
                   {usage.requests_today} / {usage.daily_quota} ({quotaPercent}%)
                 </span>

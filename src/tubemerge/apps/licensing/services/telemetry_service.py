@@ -54,32 +54,42 @@ class TelemetryService:
         user_id: Optional[str] = None,
         hardware_id: Optional[str] = None,
         daily_quota: int = 3,
+        is_weekly: bool = True,
     ) -> Dict[str, Any]:
         """Calculates accurate billable usage for the current user or workstation.
 
+        For Free tier: 3 playlists a week (7-day window).
+        For Pro / Lifetime: daily / uncapped limits.
+
         Returns:
-            requests_today: Merges performed in the last 24h window
+            requests_today: Merges performed in the quota window (7d for free, 24h for pro)
             daily_quota: Configured tier quota
+            quota_period: 'week' for Free, 'day' for Pro
             total_lifetime_merges: Total merges initiated
             total_minutes_processed: Total video minutes merged
-            quota_reset_in_hours: Hours until 24h quota reset
+            quota_reset_in_hours: Hours until quota cycle reset
         """
+        quota_period = "week" if is_weekly else "day"
+        time_interval_pg = "7 days" if is_weekly else "24 hours"
+        time_interval_sqlite = "-7 days" if is_weekly else "-24 hours"
+        reset_hours = 168 if is_weekly else 24
+
         # 1. If user is authenticated, query Supabase cloud for real usage
         if user_id:
             try:
                 with get_supabase_cursor() as cur:
-                    # Daily requests (past 24 hours)
+                    # Requests in current period (past 7 days for weekly free tier, 24h for pro)
                     cur.execute(
-                        """
+                        f"""
                         SELECT COUNT(*) FROM public.user_requests
                         WHERE user_id = %s
                           AND request_type = 'merge_job'
-                          AND created_at >= NOW() - INTERVAL '24 hours';
+                          AND created_at >= NOW() - INTERVAL '{time_interval_pg}';
                         """,
                         (user_id,),
                     )
-                    row_daily = cur.fetchone()
-                    requests_today = row_daily[0] if row_daily else 0
+                    row_period = cur.fetchone()
+                    requests_in_period = row_period[0] if row_period else 0
 
                     # Lifetime stats
                     cur.execute(
@@ -96,11 +106,12 @@ class TelemetryService:
                     total_seconds = row_total[1] if row_total else 0
 
                     return {
-                        "requests_today": requests_today,
+                        "requests_today": requests_in_period,
                         "daily_quota": daily_quota,
+                        "quota_period": quota_period,
                         "total_lifetime_merges": total_merges,
                         "total_minutes_processed": round(total_seconds / 60),
-                        "quota_reset_in_hours": 12,
+                        "quota_reset_in_hours": reset_hours,
                     }
             except Exception:
                 pass
@@ -109,14 +120,14 @@ class TelemetryService:
         try:
             conn = get_db_connection()
             cur = conn.execute(
-                """
+                f"""
                 SELECT COUNT(*) FROM request_telemetry
                 WHERE request_type = 'merge_job'
-                  AND timestamp >= datetime('now', '-24 hours');
+                  AND timestamp >= datetime('now', '{time_interval_sqlite}');
                 """
             )
-            row_today = cur.fetchone()
-            requests_today = row_today[0] if row_today else 0
+            row_period = cur.fetchone()
+            requests_in_period = row_period[0] if row_period else 0
 
             cur_total = conn.execute(
                 """
@@ -130,17 +141,19 @@ class TelemetryService:
             total_seconds = row_total[1] if row_total else 0
 
             return {
-                "requests_today": requests_today,
+                "requests_today": requests_in_period,
                 "daily_quota": daily_quota,
+                "quota_period": quota_period,
                 "total_lifetime_merges": total_merges,
                 "total_minutes_processed": round(total_seconds / 60),
-                "quota_reset_in_hours": 12,
+                "quota_reset_in_hours": reset_hours,
             }
         except Exception:
             return {
                 "requests_today": 0,
                 "daily_quota": daily_quota,
+                "quota_period": quota_period,
                 "total_lifetime_merges": 0,
                 "total_minutes_processed": 0,
-                "quota_reset_in_hours": 24,
+                "quota_reset_in_hours": reset_hours,
             }

@@ -27,6 +27,7 @@ class UserProfileResponse(BaseModel):
 class UsageMetricsResponse(BaseModel):
     requests_today: int
     daily_quota: int
+    quota_period: Optional[str] = "week"
     total_lifetime_merges: int
     total_minutes_processed: int
     quota_reset_in_hours: int
