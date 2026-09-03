@@ -41,6 +41,9 @@ yarn-error.log*
 temp_workdir/
 .write_test
 output/
+.env
+.env.*
+!.env.example
 
 # System & Editor
 .DS_Store

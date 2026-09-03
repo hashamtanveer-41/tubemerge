@@ -108,3 +108,25 @@ AUDIO_CHANNELS = 2
 HOST = "127.0.0.1"
 PORT = 7842
 SERVER_URL = f"http://{HOST}:{PORT}"
+
+# ---------------------------------------------------------------------------
+# Supabase Cloud Database Configuration
+# ---------------------------------------------------------------------------
+def _load_env_file():
+    env_file = PROJECT_ROOT / ".env"
+    if env_file.exists():
+        try:
+            for line in env_file.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+        except Exception:
+            pass
+
+_load_env_file()
+
+SUPABASE_DB_URL = os.environ.get(
+    "SUPABASE_DB_URL",
+    "postgresql://postgres:YjpcvtVyawSMuaeU@db.qjzhdfpnprthvdbijpoq.supabase.co:5432/postgres"
+)
