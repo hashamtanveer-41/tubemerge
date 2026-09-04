@@ -1,6 +1,7 @@
 """Centralized Application Configuration (Django-style Settings)."""
 
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Any
 
@@ -15,7 +16,11 @@ VERSION = "1.0.0"
 # ---------------------------------------------------------------------------
 # Filesystem Paths
 # ---------------------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    PROJECT_ROOT = Path(sys._MEIPASS)
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+
 USER_HOME = Path.home()
 
 def _resolve_data_dir() -> Path:

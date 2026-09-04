@@ -1,0 +1,108 @@
+name: Build & Release Multi-Platform Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }} (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            artifact_name: TubeMerge-Windows-x64.zip
+          - os: macos-latest
+            platform: macos
+            artifact_name: TubeMerge-macOS-x64.zip
+          - os: ubuntu-22.04
+            platform: linux
+            artifact_name: TubeMerge-Linux-x64.tar.gz
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install System Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgirepository1.0-dev libcairo2-dev libwebkit2gtk-4.1-dev
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller pillow
+
+      - name: Build Frontend Client (Zero-Admin Mode)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:client
+
+      - name: Build Desktop Executable with PyInstaller
+        run: |
+          python -m PyInstaller --clean --noconfirm tubemerge.spec
+
+      # ── Platform Packaging ─────────────────────────────────────────────────
+      - name: Package Windows (.zip)
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Path dist/TubeMerge/* -DestinationPath dist/${{ matrix.artifact_name }}
+
+      - name: Package macOS (.app / .zip)
+        if: runner.os == 'macOS'
+        run: |
+          cd dist
+          zip -r ${{ matrix.artifact_name }} TubeMerge.app
+
+      - name: Package Linux (.tar.gz)
+        if: runner.os == 'Linux'
+        run: |
+          cd dist
+          tar -czvf ${{ matrix.artifact_name }} TubeMerge/
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.artifact_name }}
+
+  release:
+    name: Publish Release Packages
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
