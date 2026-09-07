@@ -46,6 +46,8 @@ output/
 .env
 .env.*
 !.env.example
+!frontend/.env.production
+!frontend/.env.admin
 
 # System & Editor
 .DS_Store
