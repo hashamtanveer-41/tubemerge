@@ -49,7 +49,7 @@ export function ProgressSpotlight({ progress, selectedClips, onCancel }: Progres
           <div className="flex items-center gap-2.5">
             <span className="text-content-secondary font-medium">Overall Progress</span>
             {progress.speed && (
-              <span className="text-[11px] font-semibold text-brand-red bg-red-950/40 border border-red-900/50 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-in fade-in duration-150">
+              <span className="text-[11px] font-semibold text-brand-red bg-brand-red/10 border border-brand-red/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-in fade-in duration-150">
                 <ArrowDown className="w-3 h-3 text-brand-red stroke-[2.5]" />
                 <span>{progress.speed}</span>
               </span>
@@ -133,7 +133,7 @@ export function ProgressSpotlight({ progress, selectedClips, onCancel }: Progres
                     title={isDone ? 'Completed' : isActive ? 'Active' : isError ? 'Failed' : 'Pending'}
                   >
                     {isDone && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 stroke-[2.2]" />
+                      <CheckCircle2 className="w-4 h-4 text-brand-red stroke-[2.2]" />
                     )}
                     {isActive && (
                       <Spinner size="xs" variant="red" />

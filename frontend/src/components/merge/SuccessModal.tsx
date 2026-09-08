@@ -40,7 +40,7 @@ export function SuccessModal({ outputFile, onReset }: SuccessModalProps) {
 
   return (
     <Card className="p-8 max-w-xl mx-auto flex flex-col items-center text-center space-y-6 border-stroke-hover bg-theme-surface shadow-2xl select-none animate-in zoom-in-95 duration-200">
-      <div className="w-16 h-16 rounded-full bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center text-emerald-400">
+      <div className="w-16 h-16 rounded-full bg-brand-red/15 border border-brand-red/30 flex items-center justify-center text-brand-red shadow-xl shadow-brand-red/20">
         {isFolder ? (
           <FolderCheck className="w-10 h-10 stroke-[2.2]" />
         ) : (

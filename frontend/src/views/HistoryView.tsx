@@ -226,7 +226,7 @@ export function HistoryView({ onReMerge, onNavigateToMerge }: HistoryViewProps) 
                     <h3 className="text-sm sm:text-base font-bold text-white truncate">
                       {item.playlist_title}
                     </h3>
-                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-900/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-brand-red bg-brand-red/10 border border-brand-red/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       Completed
                     </span>
