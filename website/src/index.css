@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-canvas: #090a0f;
+  --color-card: #12131a;
+  --color-coral: #ff3b30;
+  --color-hairline: rgba(255, 255, 255, 0.08);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: #f4f5f7;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(255, 59, 48, 0.3);
+  color: #fff;
+}
+
+/* hide scrollbar until scrolling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+@keyframes waveDrift {
+  0% { transform: translateX(-2%) translateY(0); }
+  50% { transform: translateX(2%) translateY(-1.5%); }
+  100% { transform: translateX(-2%) translateY(0); }
+}
+
+@keyframes barPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@keyframes progressGrow {
+  from { width: 0; }
+}
+
+/* --------------------------- entrance motion ------------------------------ */
+
+/* Reveal-on-scroll base state — elements start hidden/offset, then the
+   `.is-visible` class (added by an IntersectionObserver) transitions them in. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Directional slide-in for whole sections/cards. The observer adds
+   `.is-visible` when they scroll into view. */
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-64px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal-right {
+  opacity: 0;
+  transform: translateX(64px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal-left.is-visible,
+.reveal-right.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* "Pop on hold" — the card art lifts and scales up while hovered, and pops
+   larger while actively pressed/held. */
+.pop-hold {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center;
+  cursor: zoom-in;
+}
+.pop-hold:hover {
+  transform: scale(1.05);
+}
+.pop-hold:active {
+  transform: scale(1.12);
+  transition-duration: 0.15s;
+}
+
+/* Image-specific reveal: a gentle scale + clip that makes card art "develop"
+   into view rather than just fade. */
+.reveal-media {
+  opacity: 0;
+  transform: scale(1.06);
+  clip-path: inset(0 0 12% 0);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    clip-path 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform, clip-path;
+}
+.reveal-media.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  clip-path: inset(0 0 0 0);
+}
+
+/* One-shot entrance for above-the-fold hero content (no observer needed). */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+.rise-in {
+  opacity: 0;
+  animation: riseIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* Attention bounce — a soft up/down pulse that loops every 2s to draw the
+   eye to the primary download CTA. */
+@keyframes attentionBounce {
+  0%, 100% { transform: translateY(0); }
+  15% { transform: translateY(-8px); }
+  30% { transform: translateY(0); }
+  45% { transform: translateY(-4px); }
+  60% { transform: translateY(0); }
+}
+.attention-bounce {
+  animation: attentionBounce 2s ease-in-out infinite;
+}
+/* Keep the button's own hover lift working without fighting the loop. */
+.attention-bounce:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-media,
+  .reveal-left,
+  .reveal-right,
+  .pop-hold,
+  .attention-bounce,
+  .rise-in {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    animation: none;
+    transition: none;
+  }
+}

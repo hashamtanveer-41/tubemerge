@@ -5,37 +5,43 @@ and configuring the production web endpoint. All other modules import
 their flags from here.
 """
 
+import os
+import base64
+
 # ---------------------------------------------------------------------------
 # Monetization Phase Toggle
 # ---------------------------------------------------------------------------
-# Launch Phase  (False): The app runs entirely locally. Progress updates are
-#               rendered natively inside the PyWebView / React UI. No browser
-#               window is opened.
-#
-# Traffic Phase (True):  When a user triggers a merge, the system default
-#               web browser is opened to PRODUCTION_WEB_URL with the session
-#               ID and status param so ads can run during the processing wait.
 MONETIZATION_ACTIVE: bool = False
 
 # ---------------------------------------------------------------------------
 # Production Web URL
 # ---------------------------------------------------------------------------
-# Base URL for the ad-supported processing page. A unique session_id and
-# status query param are appended at runtime.
-#   e.g. https://tubemerger.com?id=<uuid4>&status=processing
 PRODUCTION_WEB_URL: str = "https://tubemerger.com"
 
 # ---------------------------------------------------------------------------
-# Privacy-Preserving Telemetry
+# Privacy-Preserving Telemetry (Encrypted Ingestion Token)
 # ---------------------------------------------------------------------------
-# Aptabase anonymous telemetry endpoint (no PII — only raw event counters).
-# Set to empty string to disable telemetry entirely.
-TELEMETRY_APP_KEY: str = "A-EU-1063594697"
+# The Aptabase ingestion key is a publishable, write-only telemetry token (it
+# has zero read/admin access). To prevent automated crawlers and bots from
+# scraping the token from the open source repository, it is stored encrypted
+# and de-obfuscated in-memory at runtime.
+_SALT = b"TubeMerger2026TelemetryGuard"
+_ENC_KEY = "FVgnMGBUQlFWRwsEBA9j"
+
+def _resolve_telemetry_key() -> str:
+    override = os.environ.get("APTABASE_KEY")
+    if override:
+        return override.strip()
+    try:
+        raw = base64.b64decode(_ENC_KEY.encode("utf-8"))
+        return bytes(b ^ _SALT[i % len(_SALT)] for i, b in enumerate(raw)).decode("utf-8")
+    except Exception:
+        return ""
+
+TELEMETRY_APP_KEY: str = _resolve_telemetry_key()
 TELEMETRY_HOST: str = "https://eu.aptabase.com"  # EU data residency
 
 # ---------------------------------------------------------------------------
 # Clip-count bucketing for telemetry (prevents recording exact values)
 # ---------------------------------------------------------------------------
-# Events are bucketed: "small" = ≤ TELEMETRY_SMALL_THRESHOLD clips,
-# "large" = > TELEMETRY_SMALL_THRESHOLD. Raw counts are never sent.
 TELEMETRY_SMALL_THRESHOLD: int = 20

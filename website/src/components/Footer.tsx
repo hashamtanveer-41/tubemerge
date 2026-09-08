@@ -1,0 +1,88 @@
+import React from "react"
+
+function YouTubeIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 28 20"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M27.4 3.12A3.52 3.52 0 0 0 24.93.63C22.75 0 14 0 14 0S5.25 0 3.07.63A3.52 3.52 0 0 0 .6 3.12 36.9 36.9 0 0 0 0 10a36.9 36.9 0 0 0 .6 6.88 3.52 3.52 0 0 0 2.47 2.49C5.25 20 14 20 14 20s8.75 0 10.93-.63a3.52 3.52 0 0 0 2.47-2.49A36.9 36.9 0 0 0 28 10a36.9 36.9 0 0 0-.6-6.88Z"
+        fill="currentColor"
+      />
+      <path d="M11.2 14.29 18.51 10 11.2 5.71v8.58Z" fill="#fff" />
+    </svg>
+  )
+}
+
+function Logo() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <YouTubeIcon className="h-6 w-auto text-coral drop-shadow-[0_0_10px_rgba(255,59,48,0.5)]" />
+      <span className="font-display text-[19px] font-bold tracking-[-0.02em] text-white">
+        TubeMerger
+      </span>
+    </div>
+  )
+}
+
+export default function Footer() {
+  return (
+    <footer
+      id="docs"
+      role="contentinfo"
+      className="border-t border-white/[0.06] px-6 py-12 sm:px-10 bg-[#090A0F]"
+    >
+      <div className="mx-auto flex max-w-[1280px] flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+        <Logo />
+        <nav
+          className="flex flex-wrap items-center gap-x-8 gap-y-3"
+          aria-label="Footer links"
+        >
+          <a
+            href="#features"
+            className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
+          >
+            Features
+          </a>
+          <a
+            href="#community"
+            className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
+          >
+            Open Source
+          </a>
+          <a
+            href="#faq"
+            className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
+          >
+            FAQ
+          </a>
+          <a
+            href="https://github.com/hashamtanveer-41/tubemerge"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://github.com/hashamtanveer-41/tubemerge/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
+          >
+            Support
+          </a>
+        </nav>
+      </div>
+      <div className="mx-auto mt-10 flex max-w-[1280px] flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/[0.06] pt-6">
+        <span className="text-[13px] text-white/35">© 2026 tubemerger.com</span>
+        <span className="text-[13px] text-white/35">
+          Made for people who hate re-uploading.
+        </span>
+      </div>
+    </footer>
+  )
+}

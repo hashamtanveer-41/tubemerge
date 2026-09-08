@@ -69,7 +69,7 @@ export function Header({ onSearch, loading }: HeaderProps) {
           className="flex items-center gap-2 h-9 px-4 rounded-full bg-[#1A1A1A] hover:bg-[#252525] border border-[#333333] hover:border-[#555555] text-[#AAAAAA] hover:text-white text-xs font-semibold transition-all"
         >
           <Github className="w-3.5 h-3.5" />
-          <span>⭐ Star on GitHub</span>
+          <span>Star on GitHub</span>
         </a>
       </div>
     </header>

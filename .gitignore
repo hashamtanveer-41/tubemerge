@@ -57,3 +57,8 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Website / Landing Page
+website/node_modules/
+website/dist/
+website/.vercel/

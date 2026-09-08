@@ -40,7 +40,13 @@ export function App() {
           {/* Queues */}
           {app.activeTab === 'queues' && (
             <QueuesView
-              onStartMergeUrl={(url) => { app.searchPlaylist(url); app.setActiveTab('merge'); }}
+              onStartMergeUrl={(url) => {
+                if (app.isMerging) return;
+                app.searchPlaylist(url);
+                app.setActiveTab('merge');
+              }}
+              isMerging={app.isMerging}
+              activeUrl={app.playlist?.webpage_url}
             />
           )}
 
@@ -76,6 +82,8 @@ export function App() {
                   onToggle={app.toggleIndex}
                   onSelectAll={app.selectAll}
                   onDeselectAll={app.deselectAll}
+                  mergeVideos={app.mergeVideos}
+                  onToggleMergeVideos={app.setMergeVideos}
                 />
               )}
 
@@ -94,7 +102,6 @@ export function App() {
           onClear={app.deselectAll}
           loading={app.isMerging}
           mergeVideos={app.mergeVideos}
-          onToggleMergeVideos={app.setMergeVideos}
         />
       )}
 

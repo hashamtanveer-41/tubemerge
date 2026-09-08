@@ -1,0 +1,15 @@
+{
+  "title": "TubeMerger — Turn Video Playlists into Seamless Masters | Offline 8K Video Merger",
+  "description": "Merge video playlists into seamless, high-quality masters with automatic chapter bookmarks and audio leveling. 100% offline, GPU-accelerated for macOS, Windows, and Linux.",
+  "language": "en",
+  "robots": {
+    "index": true
+  },
+  "accessibility": {
+    "addBypassLinks": true,
+    "ignoreReducedMotion": false
+  },
+  "openGraph": {
+    "image": "https://tubemerger.com/og-image.png"
+  }
+}

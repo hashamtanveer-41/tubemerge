@@ -110,6 +110,11 @@ quick-oppenheimer/
 │       │   └── telemetry/                       # Aptabase anonymous counter service
 │       ├── server/app.py                        # FastAPI application mounting SPA and routers
 │       └── app.py                               # PyWebView desktop window / browser launcher
+├── website/                                     # Official Marketing Landing Page & Web Docs
+│   ├── src/                                     # React + Tailwind CSS marketing site
+│   ├── public/                                  # Static brand assets, sitemap & robots.txt
+│   ├── vercel.json                              # Vercel deployment configuration (tubemerger.com)
+│   └── package.json                             # Website build dependencies
 ├── tests/                                       # OOP unit and integration test suite
 ├── main.py                                      # Primary application entrypoint
 ├── pyproject.toml                               # PEP 621 packaging metadata
@@ -172,8 +177,8 @@ PRODUCTION_WEB_URL: str = "https://tubemerger.com"
 
 ### 2. Installation
 ```bash
-git clone https://github.com/hashamtanveer-41/tubemerge.git
-cd tubemerge
+git clone https://github.com/hashamtanveer-41/tubemerger.git
+cd tubemerger
 
 # Optional: Create and activate virtual environment
 python3 -m venv .venv

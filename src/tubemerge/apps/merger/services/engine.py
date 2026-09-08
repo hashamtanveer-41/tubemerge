@@ -125,6 +125,12 @@ class MergeEngine:
         self.is_cancelled = True
 
     def _emit(self, snapshot: ProgressSnapshot) -> None:
+        if snapshot.status == PipelineStatus.DONE:
+            try:
+                from tubemerge.apps.queues.services import QueueService
+                QueueService.remove_by_url(self.job_spec.playlist_url)
+            except Exception:
+                pass
         if self._on_progress:
             try:
                 self._on_progress(snapshot)
@@ -198,6 +204,77 @@ class MergeEngine:
 
             if self.is_cancelled:
                 self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
+                return
+
+            # ── Single Video Shortcut: If only 1 video selected, skip merge and download directly ──
+            if len(selected_entries) == 1:
+                clip = selected_entries[0]
+                clean_title = "".join(c for c in clip.title if c.isalnum() or c in " _-").strip()
+                if not clean_title:
+                    clean_title = f"TubeMerge_{job_id}"
+
+                self._emit(ProgressSnapshot(
+                    status=PipelineStatus.DOWNLOADING,
+                    current_item=1,
+                    total_items=1,
+                    current_video_title=clip.title,
+                    overall_percent=15.0,
+                    message=f"Downloading video: {clip.title}",
+                ))
+
+                out_template = str(downloads_dir / f"{clean_title}.%(ext)s")
+                dl_cmd = [
+                    self.ytdlp_path,
+                    "--ffmpeg-location", self.ffmpeg_path,
+                    "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best",
+                    "-o", out_template,
+                    "--no-playlist",
+                    "--no-warnings",
+                    clip.url,
+                ]
+
+                proc = subprocess.Popen(
+                    dl_cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                self._register_proc(proc)
+                try:
+                    _, stderr_out = proc.communicate(timeout=1800)
+                finally:
+                    self._deregister_proc(proc)
+
+                candidates = [
+                    p for p in downloads_dir.glob(f"{clean_title}.*")
+                    if not p.name.endswith((".part", ".ytdl"))
+                ]
+                final_file = candidates[0] if candidates else downloads_dir / f"{clean_title}.mp4"
+
+                safe_remove_directory(temp_dir)
+                try:
+                    import uuid as _uuid
+                    from tubemerge.apps.history.services import HistoryService
+                    dur = int(clip.duration_seconds or 0)
+                    HistoryService.add_history_entry(
+                        job_id=str(_uuid.uuid4()),
+                        playlist_title=clip.title or "Single Video",
+                        playlist_url=clip.url,
+                        channel_name=playlist.channel or "YouTube Creator",
+                        video_count=1,
+                        duration_seconds=dur,
+                        resolution="Direct Download",
+                        output_path=str(final_file),
+                    )
+                except Exception:
+                    pass
+
+                self._emit(ProgressSnapshot(
+                    status=PipelineStatus.DONE,
+                    overall_percent=100.0,
+                    message=f"Downloaded video: {final_file}",
+                    output_file=str(final_file),
+                ))
                 return
 
             # ── Mode B: Individual Videos (Single by single in dedicated folder) ──

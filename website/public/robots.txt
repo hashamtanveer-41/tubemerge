@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Host & Sitemaps
+Host: https://tubemerger.com
+Sitemap: https://tubemerger.com/sitemap.xml

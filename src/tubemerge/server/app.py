@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
     try:
         from tubemerge.apps.telemetry.service import TelemetryService
         import asyncio
-        asyncio.create_task(TelemetryService.track_app_launch())
+        TelemetryService.track_app_launch()
     except Exception:
         pass
 

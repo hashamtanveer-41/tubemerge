@@ -9,16 +9,16 @@ import {
   Trash2,
   Plus,
   Clock,
-  Layers,
-  Sparkles,
-  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 
 interface QueuesViewProps {
   onStartMergeUrl: (url: string) => void;
+  isMerging?: boolean;
+  activeUrl?: string;
 }
 
-export function QueuesView({ onStartMergeUrl }: QueuesViewProps) {
+export function QueuesView({ onStartMergeUrl, isMerging = false, activeUrl }: QueuesViewProps) {
   const [queues, setQueues] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newUrl, setNewUrl] = useState('');
@@ -39,7 +39,7 @@ export function QueuesView({ onStartMergeUrl }: QueuesViewProps) {
 
   useEffect(() => {
     fetchQueues();
-  }, []);
+  }, [isMerging]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +95,16 @@ export function QueuesView({ onStartMergeUrl }: QueuesViewProps) {
         </div>
       </div>
 
+      {/* Active Merge in Progress Notification Banner */}
+      {isMerging && (
+        <div className="p-3.5 rounded-xl border border-amber-800/40 bg-amber-950/20 text-amber-300 text-xs flex items-center gap-2.5">
+          <Clock className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+          <span>
+            A playlist is currently downloading and merging. Start Merge is temporarily disabled until the active download completes.
+          </span>
+        </div>
+      )}
+
       {/* Quick Enqueue Bar */}
       <form onSubmit={handleAdd} className="flex gap-3">
         <input
@@ -133,60 +143,79 @@ export function QueuesView({ onStartMergeUrl }: QueuesViewProps) {
       ) : (
         /* Queue Item Cards */
         <div className="space-y-3">
-          {queues.map((item, index) => (
-            <div
-              key={item.id}
-              className="rounded-2xl border border-[#262626] bg-[#161616] hover:bg-[#1A1A1A] p-4 sm:p-5 transition-all duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4"
-            >
-              <div className="flex items-start gap-4 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-[#222222] border border-[#2E2E2E] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                  #{index + 1}
-                </div>
+          {queues.map((item, index) => {
+            const isThisItemMerging = isMerging && activeUrl === item.playlist_url;
+            const isAnyMerging = Boolean(isMerging);
 
-                <div className="space-y-1.5 min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm sm:text-base font-bold text-white truncate">
-                      {item.playlist_title}
-                    </h3>
-                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/40 border border-amber-900/50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {item.status.toUpperCase()}
-                    </span>
+            return (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-[#262626] bg-[#161616] hover:bg-[#1A1A1A] p-4 sm:p-5 transition-all duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-[#222222] border border-[#2E2E2E] flex items-center justify-center text-white font-bold text-xs shrink-0">
+                    #{index + 1}
                   </div>
 
-                  <p className="text-xs text-[#888888] font-mono truncate max-w-xl">
-                    {item.playlist_url}
-                  </p>
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm sm:text-base font-bold text-white truncate">
+                        {item.playlist_title}
+                      </h3>
+                      {isThisItemMerging ? (
+                        <span className="text-[10px] font-semibold text-blue-400 bg-blue-950/50 border border-blue-800/60 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                          <Clock className="w-3 h-3" />
+                          DOWNLOADING
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/40 border border-amber-900/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {item.status.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-[#888888] font-mono truncate max-w-xl">
+                      {item.playlist_url}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => onStartMergeUrl(item.playlist_url)}
+                    disabled={isAnyMerging}
+                    loading={isThisItemMerging}
+                    icon={isThisItemMerging ? undefined : Play}
+                    className="h-9 px-4 text-xs font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={isAnyMerging ? 'Disabled while another playlist is being downloaded or merged' : 'Start merge for this playlist'}
+                  >
+                    {isThisItemMerging
+                      ? 'Downloading…'
+                      : isAnyMerging
+                      ? 'Download in Progress…'
+                      : 'Start Merge'}
+                  </Button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deletingId === item.id || isThisItemMerging}
+                    className="w-9 h-9 rounded-xl border border-[#2E2E2E] hover:border-red-500/50 flex items-center justify-center text-[#666666] hover:text-red-400 transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+                    title="Remove from queue"
+                  >
+                    {deletingId === item.id ? (
+                      <Spinner size="sm" variant="red" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onStartMergeUrl(item.playlist_url)}
-                  icon={Play}
-                  className="h-9 px-4 text-xs font-semibold rounded-xl"
-                >
-                  Start Merge
-                </Button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                  className="w-9 h-9 rounded-xl border border-[#2E2E2E] hover:border-red-500/50 flex items-center justify-center text-[#666666] hover:text-red-400 transition-colors cursor-pointer"
-                  title="Remove from queue"
-                >
-                  {deletingId === item.id ? (
-                    <Spinner size="sm" variant="red" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

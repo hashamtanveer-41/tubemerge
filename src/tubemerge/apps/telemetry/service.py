@@ -1,3 +1,4 @@
+import sys
 """Privacy-Preserving Counter Telemetry Service for TubeMerger.
 
 PRIVACY GUARANTEES:
@@ -44,12 +45,14 @@ _HEADERS = {
 # Per-process session ID: epoch + random 8 digits
 _SESSION_ID = f"{int(time.time())}{random.randint(10000000, 99999999)}"
 
+_IS_DEV = not getattr(sys, "frozen", False)
+
 _SYSTEM_PROPS = {
     "locale": "en-US",
     "osName": platform.system(),
     "osVersion": platform.release(),
     "deviceModel": platform.machine() or "PC",
-    "isDebug": getattr(settings, "DEBUG", False),
+    "isDebug": getattr(settings, "DEBUG", _IS_DEV),
     "appVersion": getattr(settings, "VERSION", "1.0.1"),
     "sdkVersion": "aptabase-python@0.1.0",
 }
@@ -116,7 +119,7 @@ class TelemetryService:
         cls._dispatch(event_name, props)
 
     @classmethod
-    async def track_app_launch(cls) -> None:
+    def track_app_launch(cls) -> None:
         """Call once when the desktop application boots up."""
         cls._dispatch("app_started")
 

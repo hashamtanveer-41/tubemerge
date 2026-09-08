@@ -150,7 +150,7 @@ export function HistoryView({ onReMerge, onNavigateToMerge }: HistoryViewProps) 
 
           <div className="rounded-2xl border border-[#262626] bg-[#161616] p-4 flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-[#202020] flex items-center justify-center text-white shrink-0">
-              <Clock className="w-5 h-5 text-amber-400" />
+              <Clock className="w-5 h-5 text-brand-red" />
             </div>
             <div>
               <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wider">Stitched Time</p>
@@ -160,7 +160,7 @@ export function HistoryView({ onReMerge, onNavigateToMerge }: HistoryViewProps) 
 
           <div className="rounded-2xl border border-[#262626] bg-[#161616] p-4 flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-[#202020] flex items-center justify-center text-white shrink-0">
-              <HardDrive className="w-5 h-5 text-emerald-400" />
+              <HardDrive className="w-5 h-5 text-brand-red" />
             </div>
             <div>
               <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wider">Database Mode</p>

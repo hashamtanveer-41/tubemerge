@@ -80,3 +80,11 @@ class QueueService:
         with conn:
             cur = conn.execute("UPDATE merge_queues SET status = ? WHERE id = ?", (status, queue_id))
             return cur.rowcount > 0
+
+    @classmethod
+    def remove_by_url(cls, playlist_url: str) -> bool:
+        """Remove queued entries matching playlist_url (e.g. upon completion)."""
+        conn = get_db_connection()
+        with conn:
+            cur = conn.execute("DELETE FROM merge_queues WHERE playlist_url = ?", (playlist_url,))
+            return cur.rowcount > 0
