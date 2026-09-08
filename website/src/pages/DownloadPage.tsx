@@ -175,7 +175,7 @@ export default function DownloadPage({
     win: {
       name: "Windows",
       heading: "Download for Windows",
-      versionInfo: "v1.0.4 • Windows 10 / 11 • 64-bit",
+      versionInfo: "v1.0.5 • Windows 10 / 11 • 64-bit",
       icon: <WindowsIcon className="h-6 w-6 text-[#00adef]" />,
       file: "TubeMerge-Setup.exe",
       url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Setup.exe",
