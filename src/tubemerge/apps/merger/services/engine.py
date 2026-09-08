@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 
 from tubemerge.core import settings
 from tubemerge.utils.file_system import safe_remove_directory
+from tubemerge.utils.process import get_hidden_subprocess_kwargs
 from tubemerge.apps.merger.services.normalizer import VideoNormalizerService
 from tubemerge.apps.merger.services.stitcher import VideoStitcherService
 
