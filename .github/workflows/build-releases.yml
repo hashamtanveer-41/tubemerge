@@ -53,7 +53,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller pillow
-          if [ "$RUNNER_OS" = "Linux" ]; then pip install PyGObject pycairo; fi
+
+      - name: Install Linux GUI Bindings (GTK3 & WebKit2)
+        if: runner.os == 'Linux'
+        run: |
+          pip install "PyGObject>=3.42.0,<3.48.0" pycairo
 
       - name: Build Frontend Client (Zero-Admin Mode)
         working-directory: frontend
