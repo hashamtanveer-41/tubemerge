@@ -1,111 +1,186 @@
-"""Merge Engine - Facade orchestrating downloads, normalization, and stitching."""
+"""Merge Pipeline Engine — Download → Normalize → Stitch → Embed Chapters.
 
-import logging
+Key design decisions for FOSS architecture:
+  - All subprocess handles are registered in a shared _ACTIVE_PROCS list.
+  - A process guard (registered via atexit + signal) issues SIGKILL to every
+    active handle when the desktop window closes or the process crashes,
+    preventing lingering zombie yt-dlp / ffmpeg tasks.
+  - No license checks. No capability gates. Everything is unrestricted.
+"""
+
+import atexit
 import os
-import re
+import signal
 import subprocess
 import threading
-import uuid
+import logging
+from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import List, Optional, Callable
+from dataclasses import dataclass, field
 
 from tubemerge.core import settings
 from tubemerge.utils.file_system import safe_remove_directory
-from tubemerge.apps.merger.models import PipelineStatus, ProgressSnapshot, MergeJobSpecification
-from tubemerge.apps.playlists.services import PlaylistMetadataService
 from tubemerge.apps.merger.services.normalizer import VideoNormalizerService
 from tubemerge.apps.merger.services.stitcher import VideoStitcherService
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Global process registry — shared across all MergeEngine instances
+# ---------------------------------------------------------------------------
+_ACTIVE_PROCS: List[subprocess.Popen] = []
+_REGISTRY_LOCK = threading.Lock()
+
+
+def _kill_all_active_processes() -> None:
+    """Force-kill every registered subprocess. Called on app exit / crash."""
+    with _REGISTRY_LOCK:
+        for proc in list(_ACTIVE_PROCS):
+            try:
+                if proc.poll() is None:
+                    logger.warning("Sending SIGKILL to PID %s on exit.", proc.pid)
+                    proc.kill()  # SIGKILL — immediate, no SIGTERM grace period
+            except Exception as exc:
+                logger.debug("Kill failed for proc: %s", exc)
+        _ACTIVE_PROCS.clear()
+
+
+def _signal_handler(signum, frame) -> None:
+    _kill_all_active_processes()
+
+
+# Register cleanup on every possible exit path
+atexit.register(_kill_all_active_processes)
+for _sig in (signal.SIGTERM, signal.SIGINT):
+    try:
+        signal.signal(_sig, _signal_handler)
+    except (OSError, ValueError):
+        pass  # Some signals can't be caught in non-main threads
+
+
+# ---------------------------------------------------------------------------
+# Pipeline state machine
+# ---------------------------------------------------------------------------
+class PipelineStatus(str, Enum):
+    IDLE = "idle"
+    FETCHING = "fetching"
+    DOWNLOADING = "downloading"
+    NORMALIZING = "normalizing"
+    STITCHING = "stitching"
+    EMBEDDING_CHAPTERS = "embedding_chapters"
+    DONE = "done"
+    CANCELLED = "cancelled"
+    ERROR = "error"
+
+
+@dataclass
+class MergeJobSpec:
+    playlist_url: str
+    selected_indices: List[int]
+    output_filename: str = "merged_output.mp4"
+    canvas_preset: str = "auto"
+    crf: int = settings.DEFAULT_CRF
+
+
+@dataclass
+class ProgressSnapshot:
+    status: PipelineStatus = PipelineStatus.IDLE
+    overall_percent: float = 0.0
+    current_item: int = 0
+    total_items: int = 0
+    current_video_title: str = ""
+    message: str = ""
+    output_file: Optional[str] = None
+    error: Optional[str] = None
+
+
 class MergeEngine:
-    """Facade coordinator for executing multi-video playlist merge jobs."""
+    """Orchestrates the full download → normalize → stitch → chapter-embed pipeline."""
 
     def __init__(
         self,
-        job_spec: MergeJobSpecification,
+        job_spec: MergeJobSpec,
         ytdlp_path: str,
         ffmpeg_path: str,
-        ffprobe_path: Optional[str] = None,
+        metadata_service,
         on_progress: Optional[Callable[[ProgressSnapshot], None]] = None,
     ):
         self.job_spec = job_spec
         self.ytdlp_path = ytdlp_path
         self.ffmpeg_path = ffmpeg_path
-        self.ffprobe_path = ffprobe_path
-        self.on_progress = on_progress
+        self.metadata_service = metadata_service
+        self._on_progress = on_progress
+        self.is_cancelled = False
 
-        self.metadata_service = PlaylistMetadataService(ytdlp_path=ytdlp_path)
-        self.normalizer_service = VideoNormalizerService(ffmpeg_path=ffmpeg_path)
+        # Services share the global process registry so guards catch their subprocesses
+        self.normalizer_service = VideoNormalizerService(
+            ffmpeg_path=ffmpeg_path,
+            process_registry=_ACTIVE_PROCS,
+        )
         self.stitcher_service = VideoStitcherService(ffmpeg_path=ffmpeg_path)
 
-        self._cancel_event = threading.Event()
-        self._thread: Optional[threading.Thread] = None
+    def cancel(self) -> None:
+        self.is_cancelled = True
 
     def _emit(self, snapshot: ProgressSnapshot) -> None:
-        if self.on_progress:
+        if self._on_progress:
             try:
-                self.on_progress(snapshot)
-            except Exception as exc:
-                logger.warning("Error in progress callback: %s", exc)
-
-    def cancel(self) -> None:
-        self._cancel_event.set()
-
-    @property
-    def is_cancelled(self) -> bool:
-        return self._cancel_event.is_set()
-
-    @property
-    def is_running(self) -> bool:
-        return self._thread is not None and self._thread.is_alive()
-
-    def start(self) -> threading.Thread:
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._thread.start()
-        return self._thread
-
-    def _probe_duration(self, file_path: Path) -> float:
-        """Use ffprobe or ffmpeg to get actual duration of a file in seconds."""
-        if self.ffprobe_path:
-            cmd = [
-                self.ffprobe_path,
-                "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                str(file_path),
-            ]
-            try:
-                res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-                if res.returncode == 0:
-                    return float(res.stdout.strip())
+                self._on_progress(snapshot)
             except Exception:
                 pass
-        return 0.0
 
-    def _run(self) -> None:
-        job_id = uuid.uuid4().hex[:8]
-        temp_dir = settings.TEMP_WORKDIR / job_id
+    def _register_proc(self, proc: subprocess.Popen) -> None:
+        with _REGISTRY_LOCK:
+            _ACTIVE_PROCS.append(proc)
+
+    def _deregister_proc(self, proc: subprocess.Popen) -> None:
+        with _REGISTRY_LOCK:
+            try:
+                _ACTIVE_PROCS.remove(proc)
+            except ValueError:
+                pass
+
+    def _probe_duration(self, path: Path) -> Optional[float]:
+        try:
+            result = subprocess.run(
+                [
+                    self.ffmpeg_path.replace("ffmpeg", "ffprobe")
+                    if "ffmpeg" in self.ffmpeg_path
+                    else "ffprobe",
+                    "-v", "quiet",
+                    "-show_entries", "format=duration",
+                    "-of", "csv=p=0",
+                    str(path),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            return float(result.stdout.strip())
+        except Exception:
+            return None
+
+    def run(self) -> None:
+        """Execute the full merge pipeline synchronously (call from a background thread)."""
+        job_id = self.job_spec.output_filename.replace(".mp4", "")
+        temp_dir = settings.TEMP_WORKDIR / f"job_{job_id}"
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        output_dir = Path(self.job_spec.output_dir) if self.job_spec.output_dir else settings.DEFAULT_OUTPUT_DIR
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        raw_name = self.job_spec.output_filename or f"TubeMerge_{job_id}.mp4"
-        if not raw_name.endswith(".mp4"):
-            raw_name += ".mp4"
-        # Sanitize filename across all filesystems (Windows, Linux, macOS)
-        sanitized_name = re.sub(r'[\\/*?:"<>|]', "_", raw_name).strip()
+        output_dir = settings.DEFAULT_OUTPUT_DIR
+        sanitized_name = "".join(
+            c for c in self.job_spec.output_filename if c.isalnum() or c in "._- "
+        ).strip()
         if not sanitized_name or sanitized_name == ".mp4":
             sanitized_name = f"TubeMerge_{job_id}.mp4"
         final_output_path = output_dir / sanitized_name
 
         try:
-            # 1. Fetch metadata
+            # ── 1. Fetch metadata ────────────────────────────────────────────
             self._emit(ProgressSnapshot(
                 status=PipelineStatus.FETCHING,
                 overall_percent=2.0,
-                message=f"Fetching playlist metadata: {self.job_spec.playlist_url}",
+                message=f"Fetching playlist metadata…",
             ))
 
             playlist = self.metadata_service.fetch_playlist(self.job_spec.playlist_url)
@@ -118,15 +193,13 @@ class MergeEngine:
                 raise ValueError("No valid videos selected for merge.")
 
             if self.is_cancelled:
-                self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Merge cancelled by user."))
+                self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
                 return
 
-            # 2. Canvas determination
+            # ── 2. Canvas determination ──────────────────────────────────────
             canvas_key = self.job_spec.canvas_preset
             preset = settings.CANVAS_PRESETS.get(canvas_key, settings.CANVAS_PRESETS["auto"])
-            target_w = preset["width"]
-            target_h = preset["height"]
-            target_fps = preset["fps"]
+            target_w, target_h, target_fps = preset["width"], preset["height"], preset["fps"]
 
             if canvas_key == "auto" and selected_entries[0].url:
                 pw, ph, pfps = self.metadata_service.probe_canvas(selected_entries[0].url)
@@ -135,10 +208,10 @@ class MergeEngine:
             total_videos = len(selected_entries)
             raw_files = []
 
-            # 3. Download phase
+            # ── 3. Download phase ────────────────────────────────────────────
             for idx, clip in enumerate(selected_entries, start=1):
                 if self.is_cancelled:
-                    self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Merge cancelled by user."))
+                    self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
                     return
 
                 pct = 5.0 + (idx / total_videos) * 40.0
@@ -162,9 +235,20 @@ class MergeEngine:
                     clip.url,
                 ]
 
-                res = subprocess.run(dl_cmd, capture_output=True, text=True, timeout=1800)
-                if res.returncode != 0:
-                    logger.warning("Download failed for %s: %s", clip.title, res.stderr[:200])
+                proc = subprocess.Popen(
+                    dl_cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                self._register_proc(proc)
+                try:
+                    _, stderr_out = proc.communicate(timeout=1800)
+                finally:
+                    self._deregister_proc(proc)
+
+                if proc.returncode != 0:
+                    logger.warning("Download failed for %s: %s", clip.title, (stderr_out or "")[:200])
                     continue
 
                 candidates = [
@@ -177,14 +261,14 @@ class MergeEngine:
             if not raw_files:
                 raise RuntimeError("No videos were successfully downloaded; nothing to merge.")
 
-            # 4. Normalization phase with progressive cleanup
+            # ── 4. Normalization phase ───────────────────────────────────────
             normalized_files: List[Path] = []
             durations: List[float] = []
             titles_success: List[str] = []
 
             for idx, (clip, raw_path) in enumerate(raw_files, start=1):
                 if self.is_cancelled:
-                    self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Merge cancelled by user."))
+                    self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
                     return
 
                 pct = 45.0 + (idx / len(raw_files)) * 35.0
@@ -207,7 +291,7 @@ class MergeEngine:
                     crf=self.job_spec.crf,
                 )
 
-                # Progressive cleanup: delete raw file immediately to reclaim disk space
+                # Progressive disk cleanup — delete raw immediately after normalization
                 raw_path.unlink(missing_ok=True)
 
                 if success:
@@ -219,9 +303,9 @@ class MergeEngine:
             if not normalized_files:
                 raise RuntimeError("Normalization failed for all video segments.")
 
-            # 5. Stitching phase
+            # ── 5. Stitching phase ───────────────────────────────────────────
             if self.is_cancelled:
-                self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Merge cancelled by user."))
+                self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
                 return
 
             self._emit(ProgressSnapshot(
@@ -237,7 +321,7 @@ class MergeEngine:
             if not stitch_ok:
                 raise RuntimeError("FFmpeg concat demuxer failed to merge video segments.")
 
-            # 6. Chapter embedding phase
+            # ── 6. Chapter embedding ─────────────────────────────────────────
             self._emit(ProgressSnapshot(
                 status=PipelineStatus.EMBEDDING_CHAPTERS,
                 overall_percent=90.0,
@@ -249,16 +333,18 @@ class MergeEngine:
             meta_path.write_text(metadata_content, encoding="utf-8")
             self.stitcher_service.embed_chapters(final_output_path, meta_path)
 
-            # 7. Finalize & Complete
+            # ── 7. Persist history ───────────────────────────────────────────
             safe_remove_directory(temp_dir)
-
             try:
-                import uuid
+                import uuid as _uuid
                 from tubemerge.apps.history.services import HistoryService
                 total_dur = int(sum(durations))
-                res_str = f"{target_h}p" if target_h <= 1080 else ("4K 60FPS" if target_h <= 2160 else "8K")
+                res_str = (
+                    f"{target_h}p" if target_h <= 1080
+                    else ("4K 60FPS" if target_h <= 2160 else "8K")
+                )
                 HistoryService.add_history_entry(
-                    job_id=str(uuid.uuid4()),
+                    job_id=str(_uuid.uuid4()),
                     playlist_title=playlist.title or "Merged Playlist",
                     playlist_url=self.job_spec.playlist_url,
                     channel_name=playlist.channel or "YouTube Creator",
@@ -284,3 +370,18 @@ class MergeEngine:
                 error=str(exc),
                 message=f"Pipeline error: {exc}",
             ))
+
+
+    def start(self) -> None:
+        """Launch the pipeline in a background daemon thread (non-blocking)."""
+        import threading as _threading
+        self.is_running = True
+        t = _threading.Thread(target=self._run_wrapper, daemon=True)
+        t.start()
+
+    def _run_wrapper(self) -> None:
+        """Thread wrapper that clears is_running on completion."""
+        try:
+            self.run()
+        finally:
+            self.is_running = False

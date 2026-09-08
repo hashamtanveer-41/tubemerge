@@ -3,6 +3,7 @@
 from typing import List, Optional
 from pydantic import BaseModel
 
+
 class StartMergeRequest(BaseModel):
     url: str
     selected_indices: List[int]
@@ -11,9 +12,14 @@ class StartMergeRequest(BaseModel):
     canvas_preset: Optional[str] = "auto"
     crf: Optional[int] = 21
 
+
 class StartMergeResponse(BaseModel):
     status: str
     job_id: str
+    message: Optional[str] = None
+    # True when MONETIZATION_ACTIVE and the system browser was opened
+    browser_opened: bool = False
+
 
 class CancelResponse(BaseModel):
     status: str

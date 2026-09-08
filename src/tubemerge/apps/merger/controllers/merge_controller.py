@@ -1,18 +1,23 @@
+"""Merge Controller — orchestrates start, SSE progress streaming, and cancellation.
+
+FOSS refactor: all quota enforcement, license checks, hardware fingerprinting,
+and billable-request telemetry removed. Unlimited merges for all users.
+"""
+
 import asyncio
 import json
 import uuid
 from typing import Optional, List
+
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 
 from tubemerge.apps.binaries.services import BinaryService
-from tubemerge.apps.merger.models import ProgressSnapshot, PipelineStatus, MergeJobSpecification
+from tubemerge.apps.playlists.services import PlaylistMetadataService
+from tubemerge.apps.merger.models import ProgressSnapshot, PipelineStatus
 from tubemerge.apps.merger.schemas import StartMergeRequest, StartMergeResponse, CancelResponse
-from tubemerge.apps.merger.services.engine import MergeEngine
-from tubemerge.apps.licensing.services.license_service import LicenseService
-from tubemerge.apps.licensing.services.telemetry_service import TelemetryService
-from tubemerge.apps.licensing.services.fingerprint_service import FingerprintService
-from tubemerge.apps.auth.services import AuthService
+from tubemerge.apps.merger.services.engine import MergeEngine, MergeJobSpec
+
 
 class MergeController:
     def __init__(self):
@@ -24,104 +29,58 @@ class MergeController:
         self,
         payload: StartMergeRequest,
         authorization: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> StartMergeResponse:
-        if self.active_engine and self.active_engine.is_running:
+        """Kick off a merge job. No license or quota gate — fully unlimited."""
+        if self.active_engine and getattr(self.active_engine, "is_running", False):
             raise HTTPException(
                 status_code=409,
-                detail={"error": "A merge job is already currently running."}
+                detail={"error": "A merge job is already running."},
             )
 
-        # 1. User Authentication & Operational Quota Enforcement
-        token = None
-        if authorization:
-            parts = authorization.split(" ")
-            token = parts[1] if len(parts) == 2 and parts[0].lower() == "bearer" else authorization
-
-        user_id = None
-        plan_tier = "FREE"
-        if token:
-            try:
-                user_info = AuthService.get_current_user(token)
-                user_id = user_info["user"]["id"]
-                plan_tier = user_info.get("plan_tier", "COMMUNITY")
-            except Exception:
-                pass
-
-        if not user_id:
-            lic = LicenseService.get_license_status()
-            plan_tier = lic.get("plan_tier", "FREE")
-
-        hwid = FingerprintService.get_hardware_id()
-        is_lifetime = (plan_tier == "LIFETIME")
-        is_pro = is_lifetime or (plan_tier in ("PRO", "CREATOR_PRO", "STUDIO"))
-        is_weekly = not is_pro
-        quota_limit = 1_000_000 if is_lifetime else (100 if is_pro else 3)
-
-        usage = TelemetryService.get_user_usage(
-            user_id=user_id,
-            hardware_id=hwid,
-            daily_quota=quota_limit,
-            is_weekly=is_weekly,
-        )
-
-        if usage["requests_today"] >= quota_limit:
-            period_label = "week" if is_weekly else "day"
-            raise HTTPException(
-                status_code=429,
-                detail={"error": f"Merge limit reached ({usage['requests_today']}/{quota_limit} playlists per {period_label}). Upgrade to Creator Pro or Lifetime for unlimited merges."}
-            )
-
-        # 2. Binary Validation
+        # Resolve installed binaries
         try:
             ffmpeg_p = self.binary_service.get_ffmpeg_path()
             ytdlp_p = self.binary_service.get_ytdlp_path()
-            ffprobe_p = None
-            try:
-                ffprobe_p = self.binary_service.get_ffprobe_path()
-            except Exception:
-                pass
-        except FileNotFoundError as exc:
+        except (FileNotFoundError, AttributeError) as exc:
             raise HTTPException(status_code=503, detail={"error": str(exc)})
 
-        # 3. Record billable merge request into Supabase PostgreSQL & SQLite
-        video_count = len(payload.selected_indices) if payload.selected_indices else 1
-        TelemetryService.record_billable_request(
-            user_id=user_id,
-            hardware_id=hwid,
-            request_type="merge_job",
-            video_count=video_count,
-            status="started",
-        )
+        job_id = session_id or uuid.uuid4().hex[:8]
 
-        job_spec = MergeJobSpecification(
+        job_spec = MergeJobSpec(
             playlist_url=payload.url,
             selected_indices=payload.selected_indices,
-            output_dir=payload.output_dir,
-            output_filename=payload.output_filename,
+            output_filename=payload.output_filename or f"TubeMerge_{job_id}.mp4",
             canvas_preset=payload.canvas_preset or "auto",
             crf=payload.crf or 21,
         )
+
+        # Build metadata service (needs ytdlp path)
+        metadata_service = PlaylistMetadataService(ytdlp_path=ytdlp_p)
 
         loop = asyncio.get_running_loop()
 
         def on_progress(snapshot: ProgressSnapshot):
             for q in list(self.progress_queues):
                 loop.call_soon_threadsafe(q.put_nowait, snapshot)
-            if snapshot.status in (PipelineStatus.DONE, PipelineStatus.ERROR, PipelineStatus.CANCELLED):
+            if snapshot.status in (
+                PipelineStatus.DONE, PipelineStatus.ERROR, PipelineStatus.CANCELLED
+            ):
                 self.active_engine = None
 
         self.active_engine = MergeEngine(
             job_spec=job_spec,
             ytdlp_path=ytdlp_p,
             ffmpeg_path=ffmpeg_p,
-            ffprobe_path=ffprobe_p,
+            metadata_service=metadata_service,
             on_progress=on_progress,
         )
-
         self.active_engine.start()
-        return StartMergeResponse(status="started", job_id=uuid.uuid4().hex[:8])
+
+        return StartMergeResponse(status="started", job_id=job_id)
 
     async def stream_progress(self) -> StreamingResponse:
+        """SSE endpoint — emits ProgressSnapshot JSON until terminal state."""
         q: asyncio.Queue = asyncio.Queue()
         self.progress_queues.append(q)
 
@@ -131,7 +90,8 @@ class MergeController:
                     try:
                         snapshot: ProgressSnapshot = await asyncio.wait_for(q.get(), timeout=15.0)
                         data = {
-                            "status": snapshot.status.value,
+                            "status": snapshot.status.value
+                                if hasattr(snapshot.status, "value") else snapshot.status,
                             "current_item": snapshot.current_item,
                             "total_items": snapshot.total_items,
                             "current_video_title": snapshot.current_video_title,
@@ -141,8 +101,10 @@ class MergeController:
                             "error": snapshot.error,
                         }
                         yield f"data: {json.dumps(data)}\n\n"
-
-                        if snapshot.status in (PipelineStatus.DONE, PipelineStatus.ERROR, PipelineStatus.CANCELLED):
+                        terminal = (
+                            PipelineStatus.DONE, PipelineStatus.ERROR, PipelineStatus.CANCELLED
+                        )
+                        if snapshot.status in terminal:
                             break
                     except asyncio.TimeoutError:
                         yield ": keepalive\n\n"

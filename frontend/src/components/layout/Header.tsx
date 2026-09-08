@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
-import { Search, Settings, Bell } from 'lucide-react';
+import { Search, Github } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { Avatar } from '@/components/ui/avatar';
 
-import { UserProfile } from '@/types';
-import { User as UserIcon } from 'lucide-react';
+const GITHUB_URL = 'https://github.com/hashamtanveer/tubemerger';
 
 interface HeaderProps {
   onSearch: (url: string) => void;
   loading: boolean;
-  user?: UserProfile | null;
-  onSignInClick?: () => void;
-  onAccountClick?: () => void;
 }
 
-export function Header({ onSearch, loading, user, onSignInClick, onAccountClick }: HeaderProps) {
+export function Header({ onSearch, loading }: HeaderProps) {
   const [url, setUrl] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,21 +27,19 @@ export function Header({ onSearch, loading, user, onSignInClick, onAccountClick 
           src="/assets/logo.png"
           alt="TubeMerge"
           className="w-9 h-9 rounded-full object-cover border border-stroke-light shrink-0"
-          onError={(e) => {
-            (e.target as HTMLElement).style.display = 'none';
-          }}
+          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
         />
         <div>
           <h1 className="text-lg font-black tracking-tight leading-none text-content-primary">
             <span className="text-brand-red">T</span>ubeMerge
           </h1>
           <p className="text-[9px] uppercase tracking-widest text-content-secondary mt-0.5 font-medium">
-            YouTube Playlist Merger
+            Free & Open Source
           </p>
         </div>
       </div>
 
-      {/* URL Input Form */}
+      {/* URL Input */}
       <form onSubmit={handleSubmit} className="flex-1 max-w-2xl px-4">
         <div className="relative flex items-center w-full">
           <input
@@ -67,46 +60,17 @@ export function Header({ onSearch, loading, user, onSignInClick, onAccountClick 
         </div>
       </form>
 
-      {/* Clean Right Controls: Settings, Notifications, Profile Avatar (No Pill Buttons) */}
-      <div className="flex items-center space-x-3 w-64 justify-end shrink-0">
-        <button
-          type="button"
-          aria-label="Settings"
-          className="w-9 h-9 rounded-full bg-theme-surface hover:bg-theme-hover border border-stroke-subtle flex items-center justify-center text-content-secondary hover:text-content-primary transition-colors cursor-pointer"
+      {/* GitHub Star button — replaces auth/sign-in */}
+      <div className="flex items-center justify-end w-64 shrink-0">
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 h-9 px-4 rounded-full bg-[#1A1A1A] hover:bg-[#252525] border border-[#333333] hover:border-[#555555] text-[#AAAAAA] hover:text-white text-xs font-semibold transition-all"
         >
-          <Settings className="w-4 h-4" />
-        </button>
-
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="w-9 h-9 rounded-full bg-theme-surface hover:bg-theme-hover border border-stroke-subtle flex items-center justify-center text-content-secondary hover:text-content-primary transition-colors relative cursor-pointer"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="w-2 h-2 rounded-full bg-brand-red absolute top-2 right-2 border-2 border-theme-base" />
-        </button>
-
-        {user ? (
-          <Avatar
-            size="md"
-            initials={
-              (user.full_name || user.name)
-                ? (user.full_name || user.name)!.substring(0, 2).toUpperCase()
-                : 'CR'
-            }
-            onClick={onAccountClick}
-            title={`${user.full_name || user.name} (${user.handle})`}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={onSignInClick}
-            className="h-9 px-3.5 rounded-full border border-blue-500/60 hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <UserIcon className="w-3.5 h-3.5" />
-            <span>Sign in</span>
-          </button>
-        )}
+          <Github className="w-3.5 h-3.5" />
+          <span>⭐ Star on GitHub</span>
+        </a>
       </div>
     </header>
   );

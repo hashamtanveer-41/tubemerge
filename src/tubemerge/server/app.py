@@ -1,5 +1,21 @@
-"""FastAPI Application Factory - Assembles modular apps and static assets."""
+"""FastAPI Application Factory — local desktop sidecar server.
 
+Mounts only the routers needed for the FOSS desktop client:
+  - binaries   → yt-dlp / ffmpeg install & health check
+  - playlists  → playlist metadata fetch
+  - merger     → start-merge, progress SSE, cancel
+  - history    → local merge history log
+  - queues     → merge queue management
+  - system     → system info, output directory
+
+Removed (FOSS pivot):
+  - licensing  → deleted entirely
+  - auth       → cloud auth not needed for local-only app
+  - billing    → payments removed (free + ad-supported)
+  - admin      → internal only; excluded from shipped client
+"""
+
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -14,24 +30,33 @@ from tubemerge.apps.binaries.routes import router as binaries_router
 from tubemerge.apps.playlists.routes import router as playlists_router
 from tubemerge.apps.merger.routes import router as merger_router
 from tubemerge.apps.system.routes import router as system_router
-from tubemerge.apps.licensing import licensing_router
 from tubemerge.apps.history.routes import router as history_router
 from tubemerge.apps.queues.routes import router as queues_router
-from tubemerge.apps.auth import auth_router
-from tubemerge.apps.billing import billing_router
-from tubemerge.apps.admin import admin_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan event handler initializing directories and database on boot."""
+    """Boot-time initialization — directories, DB schema, telemetry ping."""
     settings.BINARIES_DIR.mkdir(parents=True, exist_ok=True)
     settings.TEMP_WORKDIR.mkdir(parents=True, exist_ok=True)
     settings.DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Initialize local SQLite WAL (history + queue tables only)
     init_db()
+
+    # Fire anonymous App_Launch telemetry (async, non-blocking)
+    try:
+        from tubemerge.apps.telemetry.service import TelemetryService
+        import asyncio
+        asyncio.create_task(TelemetryService.track_app_launch())
+    except Exception:
+        pass
+
     yield
 
+
 def create_app() -> FastAPI:
-    """Instantiate and configure the FastAPI application."""
+    """Instantiate and configure the local FastAPI sidecar."""
     app = FastAPI(
         title=settings.APP_NAME,
         description=settings.APP_TAGLINE,
@@ -47,28 +72,20 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Register modular apps routers
+    # Core desktop app routers
     app.include_router(binaries_router)
     app.include_router(playlists_router)
     app.include_router(merger_router)
     app.include_router(system_router)
-    app.include_router(licensing_router)
     app.include_router(history_router)
     app.include_router(queues_router)
-    app.include_router(auth_router)
-    app.include_router(billing_router)
 
-    # Mount admin router only if admin console is enabled (omitted in shipped client binaries)
-    import os
-    if os.environ.get("TUBEMERGE_ENABLE_ADMIN", "true").lower() == "true":
-        app.include_router(admin_router)
-
-    # Mount static assets (logo.png)
+    # Static assets (logo.png, icons)
     assets_dir = settings.PROJECT_ROOT / "assets"
     if assets_dir.exists():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
-    # Mount compiled React + Vite distribution
+    # Serve compiled React + Vite frontend
     frontend_dist = settings.PROJECT_ROOT / "frontend" / "dist"
     if frontend_dist.exists():
         static_dir = frontend_dist / "static"

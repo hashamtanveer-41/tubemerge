@@ -79,3 +79,21 @@ class TestMetadataUrlSanitization(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TestTelemetryService(unittest.TestCase):
+    def test_telemetry_payload_structure(self):
+        from tubemerge.apps.telemetry.service import TelemetryService, _SYSTEM_PROPS, _SESSION_ID
+        self.assertIn("osName", _SYSTEM_PROPS)
+        self.assertIn("sdkVersion", _SYSTEM_PROPS)
+        self.assertTrue(len(_SESSION_ID) > 8)
+
+class TestFOSSController(unittest.TestCase):
+    def test_merge_job_spec(self):
+        from tubemerge.apps.merger.services.engine import MergeJobSpec
+        spec = MergeJobSpec(
+            playlist_url="https://youtube.com/playlist?list=test",
+            selected_indices=[0, 1],
+            output_filename="test.mp4",
+        )
+        self.assertEqual(spec.crf, 21)
+        self.assertEqual(spec.canvas_preset, "auto")

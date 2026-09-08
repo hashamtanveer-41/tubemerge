@@ -1,18 +1,25 @@
-"""Video Normalizer Service - Standardizes resolution, aspect ratio, CFR, and audio."""
+"""Video Normalizer Service — Standardizes resolution, frame-rate, and audio.
 
-import os
+All clips are re-encoded to a unified canvas BEFORE concatenation to prevent
+resolution fractures, FPS mismatches, and audio desync in the final output.
+
+No licensing or capability checks — TubeMerge is 100% free and open-source.
+"""
+
 import subprocess
 from pathlib import Path
 from typing import Optional, Callable
 
 from tubemerge.core import settings
-from tubemerge.apps.licensing.services.guard_service import LicensingGuard
+
 
 class VideoNormalizerService:
-    """Standardizes arbitrary video clips to a uniform resolution, 30fps CFR, and AAC stereo."""
+    """Standardizes arbitrary video clips to a uniform resolution, CFR, and AAC stereo."""
 
-    def __init__(self, ffmpeg_path: str):
+    def __init__(self, ffmpeg_path: str, process_registry: Optional[list] = None):
         self.ffmpeg_path = ffmpeg_path
+        # Shared registry — callers can pass a list to track Popen handles for SIGKILL on exit
+        self._process_registry = process_registry if process_registry is not None else []
 
     @staticmethod
     def build_filter_graph(target_w: int, target_h: int, fps: int = 30) -> str:
@@ -35,23 +42,26 @@ class VideoNormalizerService:
         audio_bitrate: str = settings.DEFAULT_AUDIO_BITRATE,
         on_log: Optional[Callable[[str], None]] = None,
     ) -> bool:
-        """Run FFmpeg to normalize video and audio streams with anti-tamper capability enforcement."""
-        # Cryptographic anti-tamper capability derivation (avoids naive `if isPro` bypasses)
-        policy = LicensingGuard.get_effective_policy()
-        safe_w, safe_h, safe_fps = policy.clamp_dimensions(target_w, target_h, fps)
-        encoder_args = policy.get_encoder_config(crf=crf)
+        """Re-encode a single clip to the target canvas/FPS/audio spec.
 
-        filter_graph = self.build_filter_graph(safe_w, safe_h, safe_fps)
+        Uses libx264 + AAC for maximum compatibility. Hardware acceleration
+        (NVENC/VideoToolbox) can be layered in here in a future iteration.
+        """
+        filter_graph = self.build_filter_graph(target_w, target_h, fps)
 
         cmd = [
             self.ffmpeg_path,
             "-y",
             "-i", str(input_path),
             "-vf", filter_graph,
-            "-r", str(safe_fps),
+            "-r", str(fps),
             "-fps_mode", "cfr",
-            *encoder_args,
+            # Video encoder
+            "-c:v", "libx264",
+            "-crf", str(crf),
+            "-preset", "fast",
             "-pix_fmt", "yuv420p",
+            # Audio encoder — standardize to AAC 44.1 kHz stereo
             "-c:a", "aac",
             "-ar", str(settings.AUDIO_SAMPLE_RATE),
             "-ac", str(settings.AUDIO_CHANNELS),
@@ -67,13 +77,22 @@ class VideoNormalizerService:
             bufsize=1,
         )
 
-        # Monitor output
-        while True:
-            line = proc.stderr.readline() if proc.stderr else ""
-            if not line and proc.poll() is not None:
-                break
-            if line and on_log:
-                on_log(line.strip())
+        # Register process handle for SIGKILL on app exit
+        self._process_registry.append(proc)
 
-        proc.wait()
+        try:
+            while True:
+                line = proc.stderr.readline() if proc.stderr else ""
+                if not line and proc.poll() is not None:
+                    break
+                if line and on_log:
+                    on_log(line.strip())
+            proc.wait()
+        finally:
+            # Deregister once done
+            try:
+                self._process_registry.remove(proc)
+            except ValueError:
+                pass
+
         return proc.returncode == 0 and output_path.exists() and output_path.stat().st_size > 0

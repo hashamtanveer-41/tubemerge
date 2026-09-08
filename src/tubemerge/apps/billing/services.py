@@ -1,18 +1,28 @@
 import os
+import json
+import hmac
+import hashlib
 import secrets
 import logging
+import httpx
 from typing import Dict, Any, List, Optional
-import stripe
 
 from tubemerge.apps.auth.db import get_supabase_cursor
 
 logger = logging.getLogger(__name__)
 
-# Stripe API configuration from environment
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-if STRIPE_SECRET_KEY:
-    stripe.api_key = STRIPE_SECRET_KEY
+# ---------------------------------------------------------------------------
+# Lemon Squeezy Configuration (loaded from .env)
+# ---------------------------------------------------------------------------
+LS_API_KEY = os.environ.get("LS_API_KEY", "")
+LS_WEBHOOK_SECRET = os.environ.get("LS_WEBHOOK_SECRET", "")
+LS_STORE_ID = os.environ.get("LS_STORE_ID", "")
+
+# Variant IDs map tier → Lemon Squeezy variant ID
+LS_VARIANT_LIFETIME = os.environ.get("LS_VARIANT_LIFETIME", "")      # $49 one-time
+LS_VARIANT_CREATOR_PRO = os.environ.get("LS_VARIANT_CREATOR_PRO", "") # $4.99/mo
+
+LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 
 PLANS_CATALOG: List[Dict[str, Any]] = [
     {
@@ -33,7 +43,7 @@ PLANS_CATALOG: List[Dict[str, Any]] = [
     {
         "id": "CREATOR_PRO_MONTHLY",
         "name": "Creator Pro (Monthly)",
-        "price": "$9",
+        "price": "$4.99",
         "interval": "per month",
         "description": "Uncapped multi-hour playlists for YouTube creators & editors.",
         "features": [
@@ -64,6 +74,16 @@ PLANS_CATALOG: List[Dict[str, Any]] = [
     },
 ]
 
+
+def _ls_headers() -> Dict[str, str]:
+    """Standard Lemon Squeezy API request headers."""
+    return {
+        "Authorization": f"Bearer {LS_API_KEY}",
+        "Accept": "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+    }
+
+
 class BillingService:
     @staticmethod
     def get_plans() -> List[Dict[str, Any]]:
@@ -78,16 +98,19 @@ class BillingService:
         success_url: Optional[str] = None,
         cancel_url: Optional[str] = None,
     ) -> Dict[str, str]:
-        """Creates a Stripe Checkout Session for subscription or lifetime purchase."""
+        """Creates a Lemon Squeezy Checkout for subscription or lifetime purchase.
+
+        Embeds user_id in custom_data so the webhook can look it up and fulfill
+        the purchase automatically in Supabase.
+        """
         s_url = success_url or "http://127.0.0.1:7842/ui/index.html?payment=success"
         c_url = cancel_url or "http://127.0.0.1:7842/ui/index.html?payment=cancelled"
 
         target_tier = "LIFETIME" if "LIFETIME" in plan_tier.upper() else "CREATOR_PRO"
 
-        # If Stripe credentials are not set in .env, provide a safe simulated checkout link
-        if not STRIPE_SECRET_KEY:
-            logger.info("STRIPE_SECRET_KEY not set. Generating simulated instant checkout.")
-            # In development/demo, simulate immediate fulfillment
+        # ── Dev / no-credentials fallback: instantly simulate fulfillment ──
+        if not LS_API_KEY or not LS_STORE_ID:
+            logger.info("LS_API_KEY/LS_STORE_ID not set — simulating instant checkout.")
             BillingService.fulfill_purchase(user_id=user_id, plan_tier=target_tier)
             return {
                 "checkout_url": f"{s_url}&simulated=true&plan={target_tier}",
@@ -95,49 +118,80 @@ class BillingService:
                 "plan_tier": target_tier,
             }
 
-        unit_amount = 4900 if target_tier == "LIFETIME" else 900
-        mode = "payment" if target_tier == "LIFETIME" else "subscription"
+        variant_id = (
+            LS_VARIANT_LIFETIME if target_tier == "LIFETIME" else LS_VARIANT_CREATOR_PRO
+        )
+        if not variant_id:
+            raise ValueError(
+                f"LS variant ID not configured for tier '{target_tier}'. "
+                "Set LS_VARIANT_LIFETIME / LS_VARIANT_CREATOR_PRO in .env."
+            )
+
+        body = {
+            "data": {
+                "type": "checkouts",
+                "attributes": {
+                    "checkout_options": {
+                        "embed": False,
+                        "media": True,
+                        "logo": True,
+                    },
+                    "checkout_data": {
+                        "email": user_email,
+                        "custom": {
+                            # Embedded in webhook payload as meta.custom_data
+                            "user_id": user_id,
+                            "plan_tier": target_tier,
+                        },
+                    },
+                    "product_options": {
+                        "redirect_url": s_url,
+                    },
+                    "expires_at": None,  # No expiry
+                },
+                "relationships": {
+                    "store": {
+                        "data": {"type": "stores", "id": str(LS_STORE_ID)}
+                    },
+                    "variant": {
+                        "data": {"type": "variants", "id": str(variant_id)}
+                    },
+                },
+            }
+        }
 
         try:
-            session = stripe.checkout.Session.create(
-                payment_method_types=["card"],
-                customer_email=user_email,
-                client_reference_id=user_id,
-                metadata={
-                    "user_id": user_id,
-                    "target_tier": target_tier,
-                    "plan_id": plan_tier,
-                },
-                line_items=[
-                    {
-                        "price_data": {
-                            "currency": "usd",
-                            "product_data": {
-                                "name": f"TubeMerge {target_tier.replace('_', ' ').title()}",
-                                "description": "Uncapped 4K YouTube Playlist Merger & Chapter Embedder",
-                            },
-                            "unit_amount": unit_amount,
-                            **({"recurring": {"interval": "month"}} if mode == "subscription" else {}),
-                        },
-                        "quantity": 1,
-                    }
-                ],
-                mode=mode,
-                success_url=f"{s_url}&session_id={{CHECKOUT_SESSION_ID}}",
-                cancel_url=c_url,
+            resp = httpx.post(
+                f"{LS_API_BASE}/checkouts",
+                headers=_ls_headers(),
+                json=body,
+                timeout=15,
             )
+            resp.raise_for_status()
+            data = resp.json()
+            checkout_url = data["data"]["attributes"]["url"]
+            checkout_id = data["data"]["id"]
+
             return {
-                "checkout_url": session.url,
-                "session_id": session.id,
+                "checkout_url": checkout_url,
+                "session_id": checkout_id,
                 "plan_tier": target_tier,
             }
+        except httpx.HTTPStatusError as exc:
+            logger.error("Lemon Squeezy checkout error: %s — %s", exc.response.status_code, exc.response.text)
+            raise ValueError(f"Lemon Squeezy error: {exc.response.text}")
         except Exception as exc:
-            logger.error("Stripe session creation error: %s", exc)
-            raise ValueError(f"Stripe error: {str(exc)}")
+            logger.error("Lemon Squeezy checkout unexpected error: %s", exc)
+            raise ValueError(f"Checkout error: {str(exc)}")
 
     @staticmethod
     def fulfill_purchase(user_id: str, plan_tier: str) -> None:
-        """Fulfills entitlement after verified payment webhook."""
+        """Fulfills entitlement after verified payment webhook.
+
+        Updates public.users.tier and inserts a row into public.user_licenses.
+        This method is intentionally kept provider-agnostic — it works for any
+        payment provider as long as the caller has resolved user_id and plan_tier.
+        """
         normalized_tier = "LIFETIME" if "LIFETIME" in plan_tier.upper() else "CREATOR_PRO"
         prefix = "TM-LIFETIME" if normalized_tier == "LIFETIME" else "TM-PRO"
         product_key = f"{prefix}-{secrets.token_hex(4).upper()}-{secrets.token_hex(4).upper()}"
@@ -145,17 +199,16 @@ class BillingService:
 
         try:
             import uuid
-            # Verify valid UUID string
             user_uuid = str(uuid.UUID(str(user_id)))
 
             with get_supabase_cursor() as cur:
-                # 1. Update user tier
+                # 1. Upgrade user tier
                 cur.execute(
                     "UPDATE public.users SET tier = %s, updated_at = NOW() WHERE id = %s;",
                     (normalized_tier, user_uuid),
                 )
 
-                # 2. Issue master product license key
+                # 2. Insert license key (idempotent)
                 cur.execute(
                     """
                     INSERT INTO public.user_licenses (user_id, license_key, tier, status, max_devices)
@@ -166,36 +219,71 @@ class BillingService:
                 )
 
             logger.info(
-                "Fulfillment complete for user %s: Tier upgraded to %s (License: %s)",
-                user_uuid,
-                normalized_tier,
-                product_key,
+                "Fulfillment complete — user=%s tier=%s license=%s",
+                user_uuid, normalized_tier, product_key,
             )
         except Exception as exc:
             logger.warning("Fulfillment DB update skipped: %s", exc)
 
     @staticmethod
-    def handle_webhook(payload: bytes, sig_header: Optional[str]) -> Dict[str, Any]:
-        """Validates and processes Stripe webhook events."""
-        if not STRIPE_WEBHOOK_SECRET:
-            # Fallback for webhook testing without signature verification
-            import json
-            event = json.loads(payload.decode("utf-8"))
+    def handle_webhook(payload: bytes, signature: Optional[str]) -> Dict[str, Any]:
+        """Validates and processes Lemon Squeezy webhook events.
+
+        Lemon Squeezy signs the raw request body with HMAC-SHA256 using the
+        webhook secret. The signature is sent in the X-Signature-256 header.
+
+        Supported events:
+          - order_created       → one-time purchase (Lifetime)
+          - subscription_created → new subscription (Creator Pro)
+        """
+        # ── Signature verification ──────────────────────────────────────────
+        if LS_WEBHOOK_SECRET:
+            if not signature:
+                raise ValueError("Missing X-Signature-256 header.")
+            expected = hmac.new(
+                LS_WEBHOOK_SECRET.encode("utf-8"),
+                payload,
+                hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(expected, signature.strip()):
+                raise ValueError("Webhook signature mismatch — possible forgery.")
         else:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, STRIPE_WEBHOOK_SECRET
-            )
+            logger.warning("LS_WEBHOOK_SECRET not set — skipping signature verification (dev mode).")
 
-        event_type = event.get("type")
-        logger.info("Received Stripe webhook event: %s", event_type)
+        # ── Parse payload ───────────────────────────────────────────────────
+        try:
+            event = json.loads(payload.decode("utf-8"))
+        except Exception as exc:
+            raise ValueError(f"Malformed webhook payload: {exc}")
 
-        if event_type == "checkout.session.completed":
-            session = event.get("data", {}).get("object", {})
-            user_id = session.get("client_reference_id") or session.get("metadata", {}).get("user_id")
-            plan_tier = session.get("metadata", {}).get("target_tier", "CREATOR_PRO")
+        meta = event.get("meta", {})
+        event_name = meta.get("event_name", "")
+        custom_data = meta.get("custom_data", {})
+
+        logger.info("Lemon Squeezy webhook received: %s", event_name)
+
+        # ── Route events ────────────────────────────────────────────────────
+        if event_name in ("order_created", "subscription_created"):
+            user_id = custom_data.get("user_id")
+            plan_tier = custom_data.get("plan_tier", "")
+
+            # Fallback: infer tier from event type if custom_data is missing
+            if not plan_tier:
+                plan_tier = "LIFETIME" if event_name == "order_created" else "CREATOR_PRO"
 
             if user_id:
                 BillingService.fulfill_purchase(user_id=user_id, plan_tier=plan_tier)
-                return {"status": "fulfilled", "user_id": user_id, "tier": plan_tier}
+                return {"status": "fulfilled", "event": event_name, "user_id": user_id, "tier": plan_tier}
+            else:
+                logger.warning(
+                    "Webhook %s received but no user_id in custom_data. "
+                    "Ensure checkout URL includes ?checkout[custom][user_id]=UUID",
+                    event_name,
+                )
+                return {"status": "skipped", "reason": "no user_id in custom_data", "event": event_name}
 
-        return {"status": "ignored", "event": event_type}
+        # subscription_payment_success fires on each recurring charge — no re-fulfillment needed
+        if event_name == "subscription_payment_success":
+            return {"status": "ignored", "event": event_name, "reason": "recurring charge, already fulfilled"}
+
+        return {"status": "ignored", "event": event_name}
