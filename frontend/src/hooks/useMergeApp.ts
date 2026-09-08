@@ -15,6 +15,7 @@ export function useMergeApp() {
   const [isMerging, setIsMerging] = useState(false);
   const [progress, setProgress] = useState<ProgressEvent | null>(null);
   const [outputFile, setOutputFile] = useState<string | null>(null);
+  const [mergeVideos, setMergeVideos] = useState<boolean>(true);
 
   // Auth & Cloud Workstations State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -141,6 +142,7 @@ export function useMergeApp() {
       await api.startMerge({
         url: playlist.webpage_url,
         selected_indices: Array.from(selectedIndices).sort((a, b) => a - b),
+        merge_videos: mergeVideos,
       });
 
       const disconnect = api.connectProgress(
@@ -151,7 +153,7 @@ export function useMergeApp() {
             if (event.output_file) {
               setOutputFile(event.output_file);
               api.getAccountUsage().then(setUsage).catch(() => {});
-              showToast('Merge completed successfully!', 'success');
+              showToast(mergeVideos ? 'Merge completed successfully!' : 'Videos downloaded to folder!', 'success');
             }
             disconnect();
           } else if (event.status === 'error' || event.status === 'cancelled') {
@@ -300,5 +302,7 @@ export function useMergeApp() {
     startMerge,
     cancelMerge,
     reset,
+    mergeVideos,
+    setMergeVideos,
   };
 }

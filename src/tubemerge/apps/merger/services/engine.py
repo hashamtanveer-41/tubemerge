@@ -81,6 +81,7 @@ class MergeJobSpec:
     output_filename: str = "merged_output.mp4"
     canvas_preset: str = "auto"
     crf: int = settings.DEFAULT_CRF
+    merge_videos: bool = True
 
 
 @dataclass
@@ -167,7 +168,10 @@ class MergeEngine:
         temp_dir = settings.TEMP_WORKDIR / f"job_{job_id}"
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        output_dir = settings.DEFAULT_OUTPUT_DIR
+        downloads_dir = Path.home() / "Downloads"
+        if not downloads_dir.exists():
+            downloads_dir = settings.DEFAULT_OUTPUT_DIR
+        output_dir = downloads_dir
         sanitized_name = "".join(
             c for c in self.job_spec.output_filename if c.isalnum() or c in "._- "
         ).strip()
@@ -194,6 +198,104 @@ class MergeEngine:
 
             if self.is_cancelled:
                 self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
+                return
+
+            # ── Mode B: Individual Videos (Single by single in dedicated folder) ──
+            if not self.job_spec.merge_videos:
+                clean_playlist_title = "".join(
+                    c for c in (playlist.title or "Playlist") if c.isalnum() or c in " _-"
+                ).strip()
+                folder_name = f"TubeMerger - {clean_playlist_title}" if clean_playlist_title else f"TubeMerger_Playlist_{job_id}"
+                target_folder = downloads_dir / folder_name
+                target_folder.mkdir(parents=True, exist_ok=True)
+
+                total_videos = len(selected_entries)
+                downloaded_files = []
+                durations = []
+
+                for idx, clip in enumerate(selected_entries, start=1):
+                    if self.is_cancelled:
+                        self._emit(ProgressSnapshot(status=PipelineStatus.CANCELLED, message="Cancelled."))
+                        return
+
+                    pct = (idx / total_videos) * 98.0
+                    self._emit(ProgressSnapshot(
+                        status=PipelineStatus.DOWNLOADING,
+                        current_item=idx,
+                        total_items=total_videos,
+                        current_video_title=clip.title,
+                        overall_percent=pct,
+                        message=f"Downloading ({idx}/{total_videos}): {clip.title}",
+                    ))
+
+                    clean_clip_title = "".join(
+                        c for c in clip.title if c.isalnum() or c in " _-"
+                    ).strip()
+                    if not clean_clip_title:
+                        clean_clip_title = f"video_{idx:02d}"
+
+                    out_template = str(target_folder / f"{idx:02d} - {clean_clip_title}.%(ext)s")
+                    dl_cmd = [
+                        self.ytdlp_path,
+                        "--ffmpeg-location", self.ffmpeg_path,
+                        "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best",
+                        "-o", out_template,
+                        "--no-playlist",
+                        "--no-warnings",
+                        clip.url,
+                    ]
+
+                    proc = subprocess.Popen(
+                        dl_cmd,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                    )
+                    self._register_proc(proc)
+                    try:
+                        _, stderr_out = proc.communicate(timeout=1800)
+                    finally:
+                        self._deregister_proc(proc)
+
+                    if proc.returncode != 0:
+                        logger.warning("Download failed for %s: %s", clip.title, (stderr_out or "")[:200])
+                        continue
+
+                    candidates = [
+                        p for p in target_folder.glob(f"{idx:02d} - {clean_clip_title}.*")
+                        if not p.name.endswith((".part", ".ytdl"))
+                    ]
+                    if candidates:
+                        downloaded_files.append(candidates[0])
+                        durations.append(float(clip.duration_seconds or 0))
+
+                if not downloaded_files:
+                    raise RuntimeError("No videos were successfully downloaded into folder.")
+
+                safe_remove_directory(temp_dir)
+                try:
+                    import uuid as _uuid
+                    from tubemerge.apps.history.services import HistoryService
+                    total_dur = int(sum(durations))
+                    HistoryService.add_history_entry(
+                        job_id=str(_uuid.uuid4()),
+                        playlist_title=playlist.title or "Playlist (Individual Videos)",
+                        playlist_url=self.job_spec.playlist_url,
+                        channel_name=playlist.channel or "YouTube Creator",
+                        video_count=len(downloaded_files),
+                        duration_seconds=total_dur,
+                        resolution="Individual Videos",
+                        output_path=str(target_folder),
+                    )
+                except Exception:
+                    pass
+
+                self._emit(ProgressSnapshot(
+                    status=PipelineStatus.DONE,
+                    overall_percent=100.0,
+                    message=f"Downloaded {len(downloaded_files)} videos to: {target_folder}",
+                    output_file=str(target_folder),
+                ))
                 return
 
             # ── 2. Canvas determination ──────────────────────────────────────

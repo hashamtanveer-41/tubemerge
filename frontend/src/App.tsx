@@ -93,6 +93,8 @@ export function App() {
           onMerge={app.startMerge}
           onClear={app.deselectAll}
           loading={app.isMerging}
+          mergeVideos={app.mergeVideos}
+          onToggleMergeVideos={app.setMergeVideos}
         />
       )}
 

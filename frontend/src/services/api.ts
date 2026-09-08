@@ -139,6 +139,7 @@ export class ApiClient {
     url: string;
     selected_indices: number[];
     output_filename?: string;
+    merge_videos?: boolean;
   }): Promise<{ status: string; job_id: string }> {
     const res = await fetch(`${this.baseUrl}/api/start-merge`, {
       method: 'POST',

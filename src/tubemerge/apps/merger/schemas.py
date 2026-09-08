@@ -11,6 +11,7 @@ class StartMergeRequest(BaseModel):
     output_filename: Optional[str] = None
     canvas_preset: Optional[str] = "auto"
     crf: Optional[int] = 21
+    merge_videos: Optional[bool] = True
 
 
 class StartMergeResponse(BaseModel):

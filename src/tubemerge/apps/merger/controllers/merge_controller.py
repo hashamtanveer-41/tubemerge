@@ -57,6 +57,7 @@ class MergeController:
             output_filename=payload.output_filename or f"TubeMerge_{job_id}.mp4",
             canvas_preset=payload.canvas_preset or "auto",
             crf=payload.crf or 21,
+            merge_videos=payload.merge_videos if payload.merge_videos is not None else True,
         )
 
         # Build metadata service (needs ytdlp path)
