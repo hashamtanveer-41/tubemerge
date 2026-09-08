@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Github } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
-const GITHUB_URL = 'https://github.com/hashamtanveer/tubemerger';
+const GITHUB_URL = 'https://github.com/hashamtanveer-41/tubemerge';
 
 interface HeaderProps {
   onSearch: (url: string) => void;

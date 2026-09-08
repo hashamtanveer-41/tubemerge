@@ -168,7 +168,7 @@ PRODUCTION_WEB_URL: str = "https://tubemerger.com"
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/hashamtanveer/tubemerger.git
+   git clone https://github.com/hashamtanveer-41/tubemerge.git
    cd tubemerger
    ```
 
