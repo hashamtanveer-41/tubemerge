@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { CheckCircle2, Circle, PlayCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, PlayCircle, XCircle, ArrowDown } from 'lucide-react';
 
 interface ProgressSpotlightProps {
   progress: ProgressEvent;
@@ -43,11 +43,19 @@ export function ProgressSpotlight({ progress, selectedClips, onCancel }: Progres
         </Button>
       </div>
 
-      {/* Overall Progress Bar */}
+      {/* Overall Progress Bar with Live Download Speed */}
       <div className="space-y-2">
         <div className="flex justify-between items-center text-xs">
-          <span className="text-content-secondary font-medium">Overall Progress</span>
-          <span className="text-content-primary font-semibold text-sm">
+          <div className="flex items-center gap-2.5">
+            <span className="text-content-secondary font-medium">Overall Progress</span>
+            {progress.speed && (
+              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-in fade-in duration-150">
+                <ArrowDown className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+                <span>{progress.speed}</span>
+              </span>
+            )}
+          </div>
+          <span className="text-content-primary font-semibold text-sm font-mono">
             {progress.overall_percent}%
           </span>
         </div>

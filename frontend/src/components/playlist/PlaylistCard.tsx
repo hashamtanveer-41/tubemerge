@@ -2,12 +2,14 @@ import React from 'react';
 import { Playlist } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Film, Clock, CheckSquare, Square } from 'lucide-react';
+import { Film, Clock, HardDrive, CheckSquare, Square } from 'lucide-react';
+import { formatBytes, estimateVideoSizeBytes } from '@/lib/utils';
 
 interface PlaylistCardProps {
   playlist: Playlist;
   selectedCount: number;
   totalCount: number;
+  selectedIndices?: Set<number>;
   onSelectAll: () => void;
   onDeselectAll: () => void;
 }
@@ -16,10 +18,22 @@ export function PlaylistCard({
   playlist,
   selectedCount,
   totalCount,
+  selectedIndices,
   onSelectAll,
   onDeselectAll,
 }: PlaylistCardProps) {
   const thumbUrl = playlist.thumbnail || (playlist.entries[0] && (playlist.entries[0].thumbnail_url || playlist.entries[0].thumbnail)) || '';
+
+  // Calculate dynamic size of selected clips (or all clips)
+  const selectedClips = selectedIndices && selectedIndices.size > 0
+    ? playlist.entries.filter((_, idx) => selectedIndices.has(idx))
+    : playlist.entries;
+
+  const totalSelectedBytes = selectedClips.reduce(
+    (acc, v) => acc + estimateVideoSizeBytes(v.duration_seconds || 0, v.resolution_label),
+    0
+  );
+  const formattedSize = formatBytes(totalSelectedBytes);
 
   return (
     <Card className="p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between border-stroke-card bg-theme-surface shadow-md">
@@ -45,7 +59,7 @@ export function PlaylistCard({
           </span>
         </div>
 
-        {/* Title & Clean Metadata Row (No AI-ish badges) */}
+        {/* Title & Clean Metadata Row with Dynamic Size */}
         <div className="min-w-0 space-y-1.5">
           <h2 className="text-base font-semibold text-content-primary truncate leading-tight" title={playlist.title}>
             {playlist.title}
@@ -59,6 +73,11 @@ export function PlaylistCard({
             <span className="flex items-center gap-1 text-content-secondary">
               <Clock className="w-3.5 h-3.5 text-content-muted" />
               {playlist.total_duration_formatted}
+            </span>
+            <span className="text-content-dim">·</span>
+            <span className="flex items-center gap-1 text-content-primary font-medium">
+              <HardDrive className="w-3.5 h-3.5 text-brand-red" />
+              <span>~{formattedSize}</span>
             </span>
             <span className="text-content-dim">·</span>
             <span>

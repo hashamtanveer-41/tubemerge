@@ -24,6 +24,7 @@ class ProgressSnapshot:
     current_video_title: str = ""
     overall_percent: float = 0.0
     message: str = ""
+    speed: Optional[str] = None
     output_file: Optional[str] = None
     error: Optional[str] = None
 

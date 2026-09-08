@@ -116,6 +116,7 @@ class MergeController:
                             "current_video_title": snapshot.current_video_title,
                             "overall_percent": round(snapshot.overall_percent, 1),
                             "message": snapshot.message,
+                            "speed": getattr(snapshot, "speed", None),
                             "output_file": snapshot.output_file,
                             "error": snapshot.error,
                         }

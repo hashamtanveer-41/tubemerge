@@ -92,6 +92,7 @@ class ProgressSnapshot:
     total_items: int = 0
     current_video_title: str = ""
     message: str = ""
+    speed: Optional[str] = None
     output_file: Optional[str] = None
     error: Optional[str] = None
 
@@ -147,6 +148,51 @@ class MergeEngine:
                 _ACTIVE_PROCS.remove(proc)
             except ValueError:
                 pass
+
+    def _run_ytdlp_download(
+        self,
+        cmd: List[str],
+        on_progress_update: Optional[Callable[[float, str], None]] = None,
+        timeout: int = 1800,
+    ) -> Tuple[int, str]:
+        """Runs yt-dlp with line-by-line progress and speed extraction."""
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            universal_newlines=True,
+        )
+        self._register_proc(proc)
+        output_lines = []
+        last_emit = 0.0
+
+        try:
+            if proc.stdout:
+                for line in proc.stdout:
+                    if self.is_cancelled:
+                        proc.kill()
+                        break
+                    line_str = line.strip()
+                    output_lines.append(line_str)
+                    if line_str.startswith("STATUS|") and on_progress_update:
+                        parts = line_str.split("|")
+                        if len(parts) >= 3:
+                            try:
+                                pct = float(parts[1].replace("%", "").strip())
+                            except ValueError:
+                                pct = 0.0
+                            raw_spd = parts[2].strip()
+                            spd = raw_spd.replace("i", "") if raw_spd and raw_spd != "Unknown speed" else ""
+                            now = time.time()
+                            if now - last_emit >= 0.25:
+                                last_emit = now
+                                on_progress_update(pct, spd)
+            proc.wait(timeout=timeout)
+            return proc.returncode, "\n".join(output_lines[-15:])
+        finally:
+            self._deregister_proc(proc)
 
     def _probe_duration(self, path: Path) -> Optional[float]:
         try:
@@ -230,20 +276,23 @@ class MergeEngine:
                     "-o", out_template,
                     "--no-playlist",
                     "--no-warnings",
+                    "--newline",
+                    "--progress-template", "download:STATUS|%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s",
                     clip.url,
                 ]
 
-                proc = subprocess.Popen(
-                    dl_cmd,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                )
-                self._register_proc(proc)
-                try:
-                    _, stderr_out = proc.communicate(timeout=1800)
-                finally:
-                    self._deregister_proc(proc)
+                def _single_progress(clip_pct: float, spd: str):
+                    self._emit(ProgressSnapshot(
+                        status=PipelineStatus.DOWNLOADING,
+                        current_item=1,
+                        total_items=1,
+                        current_video_title=clip.title,
+                        overall_percent=round(clip_pct, 1),
+                        speed=spd or None,
+                        message=f"Downloading: {clip.title} • {spd}" if spd else f"Downloading: {clip.title}",
+                    ))
+
+                rc, stderr_out = self._run_ytdlp_download(dl_cmd, on_progress_update=_single_progress)
 
                 candidates = [
                     p for p in downloads_dir.glob(f"{clean_title}.*")
@@ -319,22 +368,26 @@ class MergeEngine:
                         "-o", out_template,
                         "--no-playlist",
                         "--no-warnings",
+                        "--newline",
+                        "--progress-template", "download:STATUS|%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s",
                         clip.url,
                     ]
 
-                    proc = subprocess.Popen(
-                        dl_cmd,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                    )
-                    self._register_proc(proc)
-                    try:
-                        _, stderr_out = proc.communicate(timeout=1800)
-                    finally:
-                        self._deregister_proc(proc)
+                    def _folder_progress(clip_pct: float, spd: str):
+                        overall = ((idx - 1 + (clip_pct / 100.0)) / total_videos) * 98.0
+                        self._emit(ProgressSnapshot(
+                            status=PipelineStatus.DOWNLOADING,
+                            current_item=idx,
+                            total_items=total_videos,
+                            current_video_title=clip.title,
+                            overall_percent=round(overall, 1),
+                            speed=spd or None,
+                            message=f"Downloading ({idx}/{total_videos}): {clip.title} • {spd}" if spd else f"Downloading ({idx}/{total_videos}): {clip.title}",
+                        ))
 
-                    if proc.returncode != 0:
+                    rc, stderr_out = self._run_ytdlp_download(dl_cmd, on_progress_update=_folder_progress)
+
+                    if rc != 0:
                         logger.warning("Download failed for %s: %s", clip.title, (stderr_out or "")[:200])
                         continue
 
@@ -411,22 +464,26 @@ class MergeEngine:
                     "-o", out_template,
                     "--no-playlist",
                     "--no-warnings",
+                    "--newline",
+                    "--progress-template", "download:STATUS|%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s",
                     clip.url,
                 ]
 
-                proc = subprocess.Popen(
-                    dl_cmd,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                )
-                self._register_proc(proc)
-                try:
-                    _, stderr_out = proc.communicate(timeout=1800)
-                finally:
-                    self._deregister_proc(proc)
+                def _merge_dl_progress(clip_pct: float, spd: str):
+                    overall = 5.0 + (((idx - 1 + (clip_pct / 100.0)) / total_videos) * 40.0)
+                    self._emit(ProgressSnapshot(
+                        status=PipelineStatus.DOWNLOADING,
+                        current_item=idx,
+                        total_items=total_videos,
+                        current_video_title=clip.title,
+                        overall_percent=round(overall, 1),
+                        speed=spd or None,
+                        message=f"Downloading ({idx}/{total_videos}): {clip.title} • {spd}" if spd else f"Downloading ({idx}/{total_videos}): {clip.title}",
+                    ))
 
-                if proc.returncode != 0:
+                rc, stderr_out = self._run_ytdlp_download(dl_cmd, on_progress_update=_merge_dl_progress)
+
+                if rc != 0:
                     logger.warning("Download failed for %s: %s", clip.title, (stderr_out or "")[:200])
                     continue
 

@@ -31,6 +31,7 @@ export function DiscoveryView({
         playlist={playlist}
         selectedCount={selectedIndices.size}
         totalCount={playlist.entries.length}
+        selectedIndices={selectedIndices}
         onSelectAll={onSelectAll}
         onDeselectAll={onDeselectAll}
       />

@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Youtube } from 'lucide-react';
 import { VIDEO_CARD_GRADIENTS } from '@/data/gradients';
+import { formatBytes, estimateVideoSizeBytes } from '@/lib/utils';
 
 interface VideoTableProps {
   videos: VideoClip[];
@@ -33,6 +34,7 @@ export function VideoTable({ videos, selectedIndices, onToggle }: VideoTableProp
           const isSelected = selectedIndices.has(idx);
           const gradient = VIDEO_CARD_GRADIENTS[idx % VIDEO_CARD_GRADIENTS.length];
           const thumbUrl = video.thumbnail_url || video.thumbnail || '';
+          const estimatedSize = formatBytes(estimateVideoSizeBytes(video.duration_seconds || 0, video.resolution_label));
 
           return (
             <div
@@ -68,13 +70,17 @@ export function VideoTable({ videos, selectedIndices, onToggle }: VideoTableProp
                 </Badge>
               </div>
 
-              {/* Info */}
+              {/* Info with Duration and Estimated File Size */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-content-primary font-medium truncate leading-tight group-hover:text-red-100 transition-colors">
                   {video.title}
                 </p>
-                <p className="text-xs mt-0.5 text-content-secondary">
-                  {video.duration_formatted} &nbsp;·&nbsp; AAC 192kbps
+                <p className="text-xs mt-0.5 text-content-secondary flex items-center gap-1.5 font-normal">
+                  <span>{video.duration_formatted}</span>
+                  <span className="text-content-dim">·</span>
+                  <span className="text-zinc-300 font-medium">~{estimatedSize}</span>
+                  <span className="text-content-dim">·</span>
+                  <span>AAC 192kbps</span>
                 </p>
               </div>
 

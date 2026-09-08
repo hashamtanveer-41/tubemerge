@@ -42,6 +42,7 @@ export interface ProgressEvent {
   current_video_title: string;
   overall_percent: number;
   message: string;
+  speed?: string;
   output_file?: string;
   error?: string;
 }
