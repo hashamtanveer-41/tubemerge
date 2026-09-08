@@ -81,6 +81,7 @@ class MergeJobSpec:
     selected_indices: List[int]
     output_filename: str = "merged_output.mp4"
     canvas_preset: str = "auto"
+    quality: str = "1080p"
     crf: int = settings.DEFAULT_CRF
     merge_videos: bool = True
 
@@ -100,6 +101,22 @@ class ProgressSnapshot:
 
 class MergeEngine:
     """Orchestrates the full download → normalize → stitch → chapter-embed pipeline."""
+
+    @staticmethod
+    def _get_ytdlp_format_filter(quality: str) -> str:
+        q = (quality or "").lower()
+        if "4k" in q or "2160" in q:
+            return "bv*[height<=2160][ext=mp4]+ba[ext=m4a]/b[height<=2160][ext=mp4]/best"
+        elif "720" in q:
+            return "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/best"
+        elif "480" in q:
+            return "bv*[height<=480][ext=mp4]+ba[ext=m4a]/b[height<=480][ext=mp4]/best"
+        elif "360" in q:
+            return "bv*[height<=360][ext=mp4]+ba[ext=m4a]/b[height<=360][ext=mp4]/best"
+        elif "1080" in q:
+            return "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/best"
+        else:
+            return "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best"
 
     def __init__(
         self,
@@ -276,7 +293,7 @@ class MergeEngine:
                 dl_cmd = [
                     self.ytdlp_path,
                     "--ffmpeg-location", self.ffmpeg_path,
-                    "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best",
+                    "-f", self._get_ytdlp_format_filter(self.job_spec.quality or self.job_spec.canvas_preset),
                     "-o", out_template,
                     "--no-playlist",
                     "--no-warnings",
@@ -368,7 +385,7 @@ class MergeEngine:
                     dl_cmd = [
                         self.ytdlp_path,
                         "--ffmpeg-location", self.ffmpeg_path,
-                        "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best",
+                        "-f", self._get_ytdlp_format_filter(self.job_spec.quality or self.job_spec.canvas_preset),
                         "-o", out_template,
                         "--no-playlist",
                         "--no-warnings",
@@ -433,8 +450,8 @@ class MergeEngine:
                 return
 
             # ── 2. Canvas determination ──────────────────────────────────────
-            canvas_key = self.job_spec.canvas_preset
-            preset = settings.CANVAS_PRESETS.get(canvas_key, settings.CANVAS_PRESETS["auto"])
+            canvas_key = self.job_spec.quality or self.job_spec.canvas_preset
+            preset = settings.CANVAS_PRESETS.get(canvas_key, settings.CANVAS_PRESETS.get("1080p", settings.CANVAS_PRESETS["auto"]))
             target_w, target_h, target_fps = preset["width"], preset["height"], preset["fps"]
 
             if canvas_key == "auto" and selected_entries[0].url:
@@ -464,7 +481,7 @@ class MergeEngine:
                 dl_cmd = [
                     self.ytdlp_path,
                     "--ffmpeg-location", self.ffmpeg_path,
-                    "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best",
+                    "-f", self._get_ytdlp_format_filter(self.job_spec.quality or self.job_spec.canvas_preset),
                     "-o", out_template,
                     "--no-playlist",
                     "--no-warnings",

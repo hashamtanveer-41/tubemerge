@@ -26,16 +26,18 @@ export function formatBytes(bytes: number): string {
  * - 480p:  ~1.0 Mbps (~125 KB/s ≈ 7.5 MB/min)
  * - 4K/2160p: ~6.5 Mbps (~812 KB/s)
  */
-export function estimateVideoSizeBytes(durationSeconds: number, resolutionLabel: string = '1080p'): number {
+export function estimateVideoSizeBytes(durationSeconds: number, qualityOrResolution: string = '1080p'): number {
   if (!durationSeconds || durationSeconds <= 0) return 0;
-  const label = (resolutionLabel || '').toLowerCase();
-  let bytesPerSec = 375 * 1024;
-  if (label.includes('720')) {
-    bytesPerSec = 225 * 1024;
-  } else if (label.includes('480') || label.includes('360')) {
-    bytesPerSec = 125 * 1024;
-  } else if (label.includes('4k') || label.includes('2160') || label.includes('1440')) {
-    bytesPerSec = 812 * 1024;
+  const label = (qualityOrResolution || '').toLowerCase();
+  let bytesPerSec = 375 * 1024; // 1080p (~3.0 Mbps)
+  if (label.includes('4k') || label.includes('2160') || label.includes('1440')) {
+    bytesPerSec = 812 * 1024; // 4K (~6.5 Mbps)
+  } else if (label.includes('720')) {
+    bytesPerSec = 225 * 1024; // 720p (~1.8 Mbps)
+  } else if (label.includes('480')) {
+    bytesPerSec = 100 * 1024; // 480p (~0.8 Mbps)
+  } else if (label.includes('360')) {
+    bytesPerSec = 56 * 1024;  // 360p (~0.45 Mbps)
   }
   return durationSeconds * bytesPerSec;
 }

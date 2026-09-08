@@ -10,6 +10,7 @@ interface PlaylistCardProps {
   selectedCount: number;
   totalCount: number;
   selectedIndices?: Set<number>;
+  quality?: string;
   onSelectAll: () => void;
   onDeselectAll: () => void;
 }
@@ -19,6 +20,7 @@ export function PlaylistCard({
   selectedCount,
   totalCount,
   selectedIndices,
+  quality,
   onSelectAll,
   onDeselectAll,
 }: PlaylistCardProps) {
@@ -30,7 +32,7 @@ export function PlaylistCard({
     : playlist.entries;
 
   const totalSelectedBytes = selectedClips.reduce(
-    (acc, v) => acc + estimateVideoSizeBytes(v.duration_seconds || 0, v.resolution_label),
+    (acc, v) => acc + estimateVideoSizeBytes(v.duration_seconds || 0, quality || v.resolution_label),
     0
   );
   const formattedSize = formatBytes(totalSelectedBytes);

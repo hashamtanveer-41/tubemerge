@@ -49,7 +49,7 @@ export function ProgressSpotlight({ progress, selectedClips, onCancel }: Progres
           <div className="flex items-center gap-2.5">
             <span className="text-content-secondary font-medium">Overall Progress</span>
             {progress.speed && (
-              <span className="text-[11px] font-semibold text-brand-red bg-brand-red/10 border border-brand-red/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-in fade-in duration-150">
+              <span className="text-[11px] font-semibold text-brand-red bg-black border border-brand-red/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md shadow-black/80 animate-in fade-in duration-150">
                 <ArrowDown className="w-3 h-3 text-brand-red stroke-[2.5]" />
                 <span>{progress.speed}</span>
               </span>

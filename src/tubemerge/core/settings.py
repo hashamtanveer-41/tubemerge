@@ -95,6 +95,18 @@ CANVAS_PRESETS: Dict[str, Dict[str, Any]] = {
         "height": 720,
         "fps": 30,
     },
+    "480p": {
+        "label": "480p SD (854x480, 16:9)",
+        "width": 854,
+        "height": 480,
+        "fps": 30,
+    },
+    "360p": {
+        "label": "360p Low (640x360, 16:9)",
+        "width": 640,
+        "height": 360,
+        "fps": 30,
+    },
     "4k": {
         "label": "4K Ultra HD (3840x2160, 16:9)",
         "width": 3840,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
-import { Playlist, HealthStatus, ProgressEvent, UserProfile, LicenseInfo, UsageMetrics, ActiveDevice, AuthResponse } from '@/types';
+import { Playlist, HealthStatus, ProgressEvent, UserProfile, LicenseInfo, UsageMetrics, ActiveDevice, AuthResponse, VideoQuality } from '@/types';
 import { ToastData } from '@/components/ui/toast';
 
 export function useMergeApp() {
@@ -16,6 +16,7 @@ export function useMergeApp() {
   const [progress, setProgress] = useState<ProgressEvent | null>(null);
   const [outputFile, setOutputFile] = useState<string | null>(null);
   const [mergeVideos, setMergeVideos] = useState<boolean>(true);
+  const [quality, setQuality] = useState<VideoQuality>('1080p');
 
   // Auth & Cloud Workstations State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -143,6 +144,8 @@ export function useMergeApp() {
         url: playlist.webpage_url,
         selected_indices: Array.from(selectedIndices).sort((a, b) => a - b),
         merge_videos: mergeVideos,
+        quality,
+        canvas_preset: quality,
       });
 
       const disconnect = api.connectProgress(
@@ -304,5 +307,7 @@ export function useMergeApp() {
     reset,
     mergeVideos,
     setMergeVideos,
+    quality,
+    setQuality,
   };
 }

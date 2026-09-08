@@ -10,9 +10,10 @@ interface VideoTableProps {
   videos: VideoClip[];
   selectedIndices: Set<number>;
   onToggle: (index: number) => void;
+  quality?: string;
 }
 
-export function VideoTable({ videos, selectedIndices, onToggle }: VideoTableProps) {
+export function VideoTable({ videos, selectedIndices, onToggle, quality }: VideoTableProps) {
   return (
     <div className="space-y-3 select-none">
       <div className="flex items-center justify-between px-1">
@@ -34,7 +35,7 @@ export function VideoTable({ videos, selectedIndices, onToggle }: VideoTableProp
           const isSelected = selectedIndices.has(idx);
           const gradient = VIDEO_CARD_GRADIENTS[idx % VIDEO_CARD_GRADIENTS.length];
           const thumbUrl = video.thumbnail_url || video.thumbnail || '';
-          const estimatedSize = formatBytes(estimateVideoSizeBytes(video.duration_seconds || 0, video.resolution_label));
+          const estimatedSize = formatBytes(estimateVideoSizeBytes(video.duration_seconds || 0, quality || video.resolution_label));
 
           return (
             <div

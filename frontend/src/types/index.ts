@@ -1,3 +1,5 @@
+export type VideoQuality = '4k' | '1080p' | '720p' | '480p' | '360p' | 'auto';
+
 export interface VideoClip {
   id: string;
   title: string;

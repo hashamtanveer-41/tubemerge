@@ -51,11 +51,14 @@ class MergeController:
         job_id = session_id or uuid.uuid4().hex[:8]
         start_time = time.time()
 
+        selected_quality = payload.quality or (payload.canvas_preset if payload.canvas_preset != "auto" else "1080p")
+        canvas = payload.canvas_preset or "auto"
         job_spec = MergeJobSpec(
             playlist_url=payload.url,
             selected_indices=payload.selected_indices,
             output_filename=payload.output_filename or f"TubeMerge_{job_id}.mp4",
-            canvas_preset=payload.canvas_preset or "auto",
+            canvas_preset=canvas,
+            quality=selected_quality,
             crf=payload.crf or 21,
             merge_videos=payload.merge_videos if payload.merge_videos is not None else True,
         )

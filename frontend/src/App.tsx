@@ -84,6 +84,8 @@ export function App() {
                   onDeselectAll={app.deselectAll}
                   mergeVideos={app.mergeVideos}
                   onToggleMergeVideos={app.setMergeVideos}
+                  quality={app.quality}
+                  onQualityChange={app.setQuality}
                 />
               )}
 
