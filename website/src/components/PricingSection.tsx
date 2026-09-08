@@ -191,7 +191,7 @@ export default function PricingSection({
           }
           onClick={() => {}}
           isExternal
-          href="https://github.com/hashamtanveer-41/tubemerge"
+          href="https://github.com/hashamtanveer-41/tubemerger"
         />
         <OpenSourceCard
           name="Privacy & Architecture"
@@ -207,7 +207,7 @@ export default function PricingSection({
           cta="View Documentation"
           onClick={() => {}}
           isExternal
-          href="https://github.com/hashamtanveer-41/tubemerge#readme"
+          href="https://github.com/hashamtanveer-41/tubemerger#readme"
         />
       </div>
     </section>

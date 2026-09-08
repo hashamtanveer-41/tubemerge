@@ -178,7 +178,7 @@ export default function DownloadPage({
       versionInfo: "v1.0.4 • Windows 10 / 11 • 64-bit",
       icon: <WindowsIcon className="h-6 w-6 text-[#00adef]" />,
       file: "TubeMerge-Setup.exe",
-      url: "https://github.com/hashamtanveer-41/tubemerge/releases/latest/download/TubeMerge-Setup.exe",
+      url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Setup.exe",
     },
     mac: {
       name: "macOS",
@@ -186,7 +186,7 @@ export default function DownloadPage({
       versionInfo: "Apple Silicon & Intel • 52.1 MB",
       icon: <AppleIcon className="h-6 w-6 text-white" />,
       file: "TubeMerge-macOS-x64.zip",
-      url: "https://github.com/hashamtanveer-41/tubemerge/releases/latest/download/TubeMerge-macOS-x64.zip",
+      url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-macOS-x64.zip",
     },
     linux: {
       name: "Linux",
@@ -194,7 +194,7 @@ export default function DownloadPage({
       versionInfo: "Ubuntu / Debian / Fedora • 38.6 MB",
       icon: <UbuntuIcon className="h-6 w-6 text-[#E95420]" />,
       file: "TubeMerge-Linux-x64.tar.gz",
-      url: "https://github.com/hashamtanveer-41/tubemerge/releases/latest/download/TubeMerge-Linux-x64.tar.gz",
+      url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Linux-x64.tar.gz",
     },
   }
 
@@ -253,7 +253,7 @@ export default function DownloadPage({
               <span>Back to Website</span>
             </button>
             <a
-              href="https://github.com/hashamtanveer-41/tubemerge"
+              href="https://github.com/hashamtanveer-41/tubemerger"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 justify-center rounded-full bg-white/10 hover:bg-white/20 text-white h-9 px-4 text-[13.5px] font-medium transition-all cursor-pointer border border-white/10"
@@ -308,7 +308,7 @@ export default function DownloadPage({
             <div className="rounded-2xl border border-white/[0.08] bg-[#12141D] p-6 space-y-4 max-w-[480px] mx-auto text-center">
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <a
-                  href="https://github.com/hashamtanveer-41/tubemerge"
+                  href="https://github.com/hashamtanveer-41/tubemerger"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-coral hover:brightness-110 h-11 px-5 text-[14px] font-semibold text-white transition-all cursor-pointer shadow-md"
@@ -452,7 +452,7 @@ export default function DownloadPage({
             <div className="text-center pt-2 text-[13px] text-white/40">
               Looking for source code?{" "}
               <a
-                href="https://github.com/hashamtanveer-41/tubemerge"
+                href="https://github.com/hashamtanveer-41/tubemerger"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-white underline transition-colors"
@@ -485,7 +485,7 @@ export default function DownloadPage({
             </button>
             <span>•</span>
             <a
-              href="https://github.com/hashamtanveer-41/tubemerge"
+              href="https://github.com/hashamtanveer-41/tubemerger"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 hover:text-white transition-colors"

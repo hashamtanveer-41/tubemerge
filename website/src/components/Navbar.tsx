@@ -84,7 +84,7 @@ export default function Navbar({ onOpenDownload }: NavbarProps) {
     { label: "FAQ", href: "#faq" },
     {
       label: "Support",
-      href: "https://github.com/hashamtanveer-41/tubemerge/issues",
+      href: "https://github.com/hashamtanveer-41/tubemerger/issues",
       external: true,
     },
   ]
@@ -121,7 +121,7 @@ export default function Navbar({ onOpenDownload }: NavbarProps) {
         {/* Action Buttons */}
         <div className="hidden sm:flex items-center gap-3">
           <a
-            href="https://github.com/hashamtanveer-41/tubemerge"
+            href="https://github.com/hashamtanveer-41/tubemerger"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] h-10 px-4 text-[13.5px] font-sans font-medium text-white/80 hover:text-white hover:border-white/30 hover:bg-white/[0.06] transition-all"
@@ -185,7 +185,7 @@ export default function Navbar({ onOpenDownload }: NavbarProps) {
           ))}
           <div className="pt-3 border-t border-white/[0.08] flex flex-col gap-2.5">
             <a
-              href="https://github.com/hashamtanveer-41/tubemerge"
+              href="https://github.com/hashamtanveer-41/tubemerger"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] h-10 text-[14px] font-medium text-white/80"

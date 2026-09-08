@@ -60,7 +60,7 @@ export default function Footer() {
             FAQ
           </a>
           <a
-            href="https://github.com/hashamtanveer-41/tubemerge"
+            href="https://github.com/hashamtanveer-41/tubemerger"
             target="_blank"
             rel="noopener noreferrer"
             className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
@@ -68,7 +68,7 @@ export default function Footer() {
             GitHub
           </a>
           <a
-            href="https://github.com/hashamtanveer-41/tubemerge/issues"
+            href="https://github.com/hashamtanveer-41/tubemerger/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="font-sans text-[14px] text-white/50 transition-colors hover:text-white"
