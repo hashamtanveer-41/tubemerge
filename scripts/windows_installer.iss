@@ -1,8 +1,13 @@
 ; Inno Setup Script for TubeMerge (Windows 64-bit)
-; Generates TubeMerge-Setup-v1.0.0.exe
 
+#ifndef MyAppName
 #define MyAppName "TubeMerge"
-#define MyAppVersion "1.0.0"
+#endif
+
+#ifndef MyAppVersion
+#define MyAppVersion "1.0.4"
+#endif
+
 #define MyAppPublisher "TubeMerge Inc."
 #define MyAppURL "https://tubemerger.com"
 #define MyAppExeName "TubeMerge.exe"
