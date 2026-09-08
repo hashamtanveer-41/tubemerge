@@ -1,112 +1,119 @@
-# TubeMerge
+# TubeMerge 🎬
+> **Production-Grade Desktop Application for YouTube Playlist Concatenation & Normalization**  
+> *Official Domain: [tubemerger.com](https://tubemerger.com)*
 
-**Merge YouTube playlists into a single MP4 — offline, free, and open source.**
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg)](https://fastapi.tiangolo.com/)
+[![React 19](https://img.shields.io/badge/react-19.0-61DAFB.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.7-3178C6.svg)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/tailwindcss-3.4-38B2AC.svg)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL-003B57.svg)](https://sqlite.org/wal.html)
+[![Aptabase](https://img.shields.io/badge/Analytics-Aptabase%20EU-green.svg)](https://aptabase.com/)
 
-TubeMerge is a cross-platform desktop application that downloads videos selected from any public or unlisted YouTube playlist, standardises them to a uniform resolution and stereo audio track, stitches them seamlessly into one MP4 file, and automatically embeds clickable chapter markers for every video track.
+TubeMerge is a modern, high-performance desktop media utility that downloads and stitches arbitrary YouTube playlists into a single, broadcast-quality MP4 file. It features an automated audio clock synchronization engine, master canvas normalization, chapter embedding, privacy-preserving telemetry via Aptabase, and a sleek YouTube Studio-inspired dark mode interface — **100% free and open source**.
 
 ---
 
 ## Key Features
 
-- **Granular Clip Selection**: Select all or any subset of videos from a playlist; reorder or merge them in sequence.
-- **Resolution Normalisation**: Automatically scales and pads varying video resolutions to a uniform canvas (CRF 21, libx264) to eliminate glitchy transitions and aspect ratio jumps.
-- **Balanced Audio Standardisation**: Re-encodes audio tracks to uniform 44.1 kHz AAC stereo to avoid volume drops between clips.
-- **Embedded Chapter Markers**: Embeds seekable MP4 chapter markers named after the original video titles (compatible with VLC, QuickTime, mpv, and browser players).
-- **100% Local Processing**: All video downloads and encoding happen on localhost via bundled `yt-dlp` and `ffmpeg` binaries. No videos or URLs are uploaded to external servers.
-- **Unlimited & Free**: Completely open source under the MIT license with zero quotas, device limits, or paid license keys.
-- **Local History & Queue**: Track past merge jobs and queued operations stored locally in an embedded SQLite WAL database.
+- **Decoupled Local Sidecar Architecture**: High-speed Python backend (FastAPI + SQLite WAL) paired with a React 19 + TypeScript + Tailwind CSS desktop UI served locally via PyWebView.
+- **Smart Video Normalization**: Automatically scales and pads varying playlist resolutions to a uniform master canvas (CRF 21, libx264), enforces constant framerates, and eliminates aspect ratio jumps.
+- **Balanced Audio Synchronization**: Re-encodes audio tracks to uniform 44.1 kHz AAC stereo so audio levels don't drop or distort across merged segments.
+- **Automated Chapter Demuxing**: Automatically generates and embeds seekable MP4 chapter markers from individual YouTube clip titles.
+- **100% Local & Private Processing**: yt-dlp and FFmpeg run directly on your machine. No raw playlist URLs, titles, or video streams are ever uploaded to cloud servers.
+- **High-Performance SQLite WAL Database**: Thread-safe, non-blocking local storage handling merge job history and queue management with sub-millisecond query latency.
+- **Completely Free & Unlimited**: Zero paywalls, no device limits, no subscription tiers, and no license keys required.
 
 ---
 
 ## Processing Pipeline
 
-```
-          [ YouTube Playlist URL ]
-                     │
-                     ▼
-          [ Playlist Metadata Probe ]
-          (yt-dlp extracts clip list & durations)
-                     │
-                     ▼
-          [ Granular Clip Selection ]
-          (User picks target videos in React UI)
-                     │
-                     ▼
-          [ Local Segment Download ]
-          (yt-dlp fetches raw video streams)
-                     │
-                     ▼
-          [ Normalisation Engine ]
-          (FFmpeg re-encodes to uniform resolution + AAC stereo)
-                     │
-                     ▼
-          [ FFmpeg Concat Demuxer ]
-          (Stitches normalised segments without frame drops)
-                     │
-                     ▼
-          [ Chapter Metadata Mux ]
-          (Embeds seekable chapter markers from video metadata)
-                     │
-                     ▼
-             [ Final .mp4 Output ]
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User as User (React 19 UI)
+    participant API as FastAPI Backend Sidecar
+    participant YTDLP as yt-dlp Extractor
+    participant FFMPEG as FFmpeg Processing Engine
+    participant DB as SQLite WAL Cache
+
+    Note over User,API: Step 1: Playlist Inspection
+    User->>API: Paste YouTube Playlist URL
+    API->>YTDLP: Probe playlist metadata & extract clip list
+    YTDLP-->>API: Return video titles, durations & thumbnails
+    API-->>User: Display interactive clip selector (DiscoveryView)
+
+    Note over User,FFMPEG: Step 2: Local Download & Normalisation
+    User->>API: Start Merge (Selected Video Indices)
+    API->>DB: Record new merge job in local history
+    API->>YTDLP: Download selected raw video streams to temp workspace
+    loop For each downloaded clip
+        API->>FFMPEG: Re-encode to matching resolution + AAC stereo
+        FFMPEG-->>API: Stream encoding progress (SSE)
+        API-->>User: Real-time progress updates in UI
+    end
+
+    Note over API,User: Step 3: Concat Demuxing & Chapter Embedding
+    API->>FFMPEG: Concat demuxer (lossless segment stitching)
+    API->>FFMPEG: Embed MP4 chapter markers from clip titles
+    FFMPEG-->>API: Final unified .mp4 file created
+    API->>DB: Mark merge job as completed
+    API-->>User: Complete! Reveal file in OS file manager
 ```
 
 ---
 
-## Architecture
-
-TubeMerge uses a modern decoupled architecture consisting of an embedded Python backend sidecar, a high-performance SQLite WAL storage engine, and a React 19 desktop interface wrapped via PyWebView.
-
-### Tech Stack
-
-| Layer | Component | Description |
-|---|---|---|
-| **Desktop Shell** | PyWebView 6 | Native desktop window (WebKitGTK on Linux, WKWebView on macOS, WebView2 on Windows) |
-| **Sidecar Server** | FastAPI + Uvicorn | High-performance asynchronous HTTP & SSE daemon on localhost (`127.0.0.1:7842`) |
-| **Download Engine** | yt-dlp | Local command-line YouTube extractor and stream downloader |
-| **Media Pipeline** | FFmpeg 7.0+ (static) | Video scaling, canvas padding, audio normalisation, concat demuxing, and chapter muxing |
-| **Local Cache** | SQLite WAL Mode | Thread-safe, non-blocking local storage for history and queues |
-| **User Interface** | React 19 + Vite + Tailwind CSS | Desktop UI with real-time SSE progress streaming and playlist inspection |
-| **Analytics** | Aptabase EU | Anonymous, GDPR-compliant volumetric counter telemetry |
-
-### Directory Layout
+## System Architecture & Directory Layout
 
 ```
 quick-oppenheimer/
-├── src/tubemerge/
-│   ├── core/
-│   │   ├── settings.py           # Application constants, paths, and canvas presets
-│   │   └── config.py             # Feature flags, Aptabase key, and monetization config
-│   ├── db/
-│   │   └── connection.py         # SQLite WAL schema (history, queues, local logging)
-│   ├── apps/
-│   │   ├── binaries/             # yt-dlp & FFmpeg automatic resolution and validation
-│   │   ├── playlists/            # Playlist probing and clip metadata extraction
-│   │   ├── merger/
-│   │   │   ├── services/
-│   │   │   │   ├── engine.py     # Multi-stage orchestrator (download → normalise → stitch)
-│   │   │   │   ├── normalizer.py # Per-clip FFmpeg normalisation (libx264 + AAC)
-│   │   │   │   └── stitcher.py   # Concat demuxer and MP4 chapter embedding
-│   │   │   ├── controllers/      # FastAPI controller with SSE progress queues
-│   │   │   └── routes.py         # /api/start-merge, /api/progress (SSE), /api/cancel
-│   │   ├── history/              # Local merge job history management
-│   │   ├── queues/               # Merge job queue handling
-│   │   ├── system/               # Native file revelation (xdg-open, explorer, open)
-│   │   └── telemetry/            # Aptabase anonymous event reporting
-│   ├── server/
-│   │   └── app.py                # FastAPI factory mounting static frontend assets
-│   └── app.py                    # PyWebView window manager and lifecycle handler
-├── frontend/
+├── assets/                                      # Branded assets & studio panoramic artwork
+│   ├── banner.jpg                               # "We Build to Make Your Life Easier" banner
+│   └── logo.png                                 # TubeMerge identity badge
+├── docs/                                        # Architecture & engineering specifications
+│   └── PRODUCTION_ISSUES_AND_SOLUTIONS.md       # Technical issue resolution post-mortem
+├── frontend/                                    # Modern React 19 + TypeScript + Vite SPA
 │   ├── src/
-│   │   ├── views/                # DiscoveryView, EmptyStateView, HistoryView, QueuesView
-│   │   ├── components/           # Header, Sidebar, ProgressSpotlight, FloatingActionBar
-│   │   ├── hooks/                # useMergeApp state orchestrator
-│   │   └── services/             # Typed API client and Server-Sent Events subscriber
-│   ├── vite.config.ts
-│   └── package.json
-├── main.py                       # Main application entry point
-├── requirements.txt              # Python runtime dependencies
-└── LICENSE                       # MIT License
+│   │   ├── components/
+│   │   │   ├── ui/                              # Primitive components (Button, Badge, Spinner)
+│   │   │   ├── layout/                          # Header, Sidebar, Navigation
+│   │   │   └── merge/                           # Action panels, ProgressSpotlight, FloatingActionBar
+│   │   ├── views/
+│   │   │   ├── EmptyStateView.tsx               # 3x2 Feature showcase grid & GitHub Star CTA
+│   │   │   ├── DiscoveryView.tsx                # Playlist clip inspector & selector
+│   │   │   ├── HistoryView.tsx                  # Local SQLite merge history log
+│   │   │   └── QueuesView.tsx                   # Background merge queue view
+│   │   ├── hooks/useMergeApp.ts                 # Unified application state manager
+│   │   └── services/api.ts                      # Strongly typed REST client & SSE subscriber
+│   └── dist/                                    # Pre-compiled production bundle
+├── src/
+│   └── tubemerge/                               # Python Backend (Modular Apps)
+│       ├── core/
+│       │   ├── settings.py                      # Application settings, paths, & canvas presets
+│       │   └── config.py                        # Feature flags, Aptabase key & monetization settings
+│       ├── db/
+│       │   └── connection.py                    # SQLite WAL connection manager & auto-migrations
+│       ├── apps/
+│       │   ├── binaries/                        # FFmpeg & yt-dlp locator & auto-installer
+│       │   ├── playlists/                       # YouTube metadata & master canvas probing
+│       │   ├── merger/                          # FFmpeg normalizer, concat stitcher, MergeEngine
+│       │   │   ├── services/
+│       │   │   │   ├── engine.py                # Download → normalise → stitch pipeline
+│       │   │   │   ├── normalizer.py            # FFmpeg per-clip re-encode (libx264 + AAC)
+│       │   │   │   └── stitcher.py              # FFmpeg concat + chapter metadata embed
+│       │   │   ├── controllers/merge_controller.py
+│       │   │   └── routes.py                    # /api/start-merge, /api/progress (SSE), /api/cancel
+│       │   ├── history/                         # Local merge job history management
+│       │   ├── queues/                          # Merge job queue handling
+│       │   ├── system/                          # Native OS file integration (xdg-open / explorer)
+│       │   └── telemetry/                       # Aptabase anonymous counter service
+│       ├── server/app.py                        # FastAPI application mounting SPA and routers
+│       └── app.py                               # PyWebView desktop window / browser launcher
+├── tests/                                       # OOP unit and integration test suite
+├── main.py                                      # Primary application entrypoint
+├── pyproject.toml                               # PEP 621 packaging metadata
+└── requirements.txt                             # Python dependencies
 ```
 
 ---
@@ -121,7 +128,7 @@ TubeMerge incorporates privacy-first, GDPR-compliant volumetric telemetry via [A
 ### Privacy Guarantees
 
 1. **Zero Personally Identifiable Information (PII)**: No usernames, IP addresses, device identifiers, or hardware fingerprints are collected.
-2. **No URLs or Titles**: YouTube URLs, playlist links, channel names, and video titles are **never transmitted** or logged.
+2. **No URLs or Video Metadata**: YouTube URLs, playlist links, channel names, and video titles are **never transmitted** or logged.
 3. **Clip Count Bucketing**: Raw numbers of selected clips are never sent; they are bucketed into generic categories (`small` for ≤ 20 clips, `large` for > 20 clips).
 4. **Tracked Events**:
    - `app_started`: Anonymous ping on desktop app startup.
@@ -134,20 +141,20 @@ Telemetry can be disabled at any time by setting `TELEMETRY_APP_KEY = ""` in `sr
 
 ```python
 # src/tubemerge/core/config.py
-TELEMETRY_APP_KEY: str = ""  # Set to empty string to disable all telemetry
+TELEMETRY_APP_KEY: str = ""  # Set to empty string to disable telemetry
 ```
 
 ---
 
 ## Future Monetization
 
-TubeMerge is 100% free and unlimited. The legacy proprietary licensing model (Ed25519 signature checks, hardware fingerprinting, Stripe billing) has been completely removed.
+TubeMerge is **100% free and unlimited**. All legacy proprietary licensing logic (Ed25519 signature checks, hardware fingerprinting, Stripe billing) has been completely removed.
 
-Future monetization will use an optional, lightweight web redirect during the FFmpeg processing wait:
+Future monetization (when traffic scales) will rely on an optional ad-supported web redirect during the FFmpeg processing wait:
 
 ```python
 # src/tubemerge/core/config.py
-MONETIZATION_ACTIVE: bool = False  # Toggle to True to enable ad-supported redirect
+MONETIZATION_ACTIVE: bool = False  # Set to True to enable ad-supported redirect
 PRODUCTION_WEB_URL: str = "https://tubemerger.com"
 ```
 
@@ -156,46 +163,61 @@ PRODUCTION_WEB_URL: str = "https://tubemerger.com"
 
 ---
 
-## Getting Started
+## 🛠 Quick Start
 
-### Prerequisites
+### 1. Prerequisites
+- **Python 3.10+** (Python 3.10, 3.11, 3.12, 3.13, 3.14 supported)
+- **Node.js 18+ & npm** (only needed if building frontend from source)
+- **FFmpeg & yt-dlp** (Auto-detected from PATH or automatically downloaded on first launch to `~/.videoplaylistmerger/bin/`)
 
-- Python 3.10+
-- Node.js 18+ and npm
-- Linux, macOS, or Windows
+### 2. Installation
+```bash
+git clone https://github.com/hashamtanveer-41/tubemerge.git
+cd tubemerge
 
-### Installation
+# Optional: Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/hashamtanveer-41/tubemerge.git
-   cd tubemerger
-   ```
+# Install requirements
+pip install -r requirements.txt
+```
 
-2. **Install Python dependencies:**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-3. **Build the frontend:**
-   ```bash
-   cd frontend
-   npm install
-   npm run build
-   cd ..
-   ```
-
-4. **Launch the application:**
-   ```bash
-   PYTHONPATH=src python3 main.py
-   ```
-
-The application will start the FastAPI backend on `http://127.0.0.1:7842` and open the PyWebView desktop window.
+### 3. Running the Application
+```bash
+python3 main.py
+```
+*The app will automatically launch a native desktop GUI window or open in your default browser at `http://127.0.0.1:7842`.*
 
 ---
 
-## License
+## 💻 Frontend Development (Optional)
 
-This project is licensed under the [MIT License](LICENSE).
+If modifying the React user interface:
+```bash
+cd frontend
+
+# Install Node dependencies
+npm install
+
+# Start Vite live development server
+npm run dev
+
+# Compile production bundle into frontend/dist/
+npm run build
+```
+
+---
+
+## 🧪 Automated Testing
+
+Run the comprehensive unit test suite:
+```bash
+python3 -m unittest discover tests
+```
+
+---
+
+## 📄 License
+This project is licensed under the **[MIT License](LICENSE)** — free for personal and commercial use.  
+*Copyright © 2026 TubeMerge Contributors.*
