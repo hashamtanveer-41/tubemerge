@@ -10,7 +10,7 @@ from typing import Dict, Any
 # ---------------------------------------------------------------------------
 APP_NAME = "TubeMerge"
 APP_TAGLINE = "YouTube Playlist Merger"
-DOMAIN = "videoplaylistmerger.com"
+DOMAIN = "tubemerger.com"
 VERSION = "1.0.0"
 
 # ---------------------------------------------------------------------------
@@ -25,7 +25,14 @@ USER_HOME = Path.home()
 
 def _resolve_data_dir() -> Path:
     """Resolve writable app data directory with safe fallback."""
-    candidate = USER_HOME / ".videoplaylistmerger"
+    candidate = USER_HOME / ".tubemerger"
+    legacy = USER_HOME / ".videoplaylistmerger"
+    if legacy.exists() and not candidate.exists():
+        try:
+            import shutil
+            shutil.copytree(legacy, candidate)
+        except Exception:
+            pass
     try:
         candidate.mkdir(parents=True, exist_ok=True)
         test_file = candidate / ".write_test"
@@ -63,7 +70,7 @@ def _resolve_output_dir() -> Path:
 
 DEFAULT_OUTPUT_DIR = _resolve_output_dir()
 
-# Ensure ~/.videoplaylistmerger/bin is in PATH for any subprocesses
+# Ensure ~/.tubemerger/bin is in PATH for any subprocesses
 os.environ["PATH"] = f"{BINARIES_DIR}:{os.environ.get('PATH', '')}"
 
 # ---------------------------------------------------------------------------

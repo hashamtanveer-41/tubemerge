@@ -14,7 +14,14 @@ import sqlite3
 import threading
 from tubemerge.core import settings
 
-DB_FILE = settings.APP_DATA_DIR / "tubemerge.db"
+DB_FILE = settings.APP_DATA_DIR / "tubemerger.db"
+legacy_db = settings.APP_DATA_DIR / "tubemerge.db"
+if legacy_db.exists() and not DB_FILE.exists():
+    try:
+        import shutil
+        shutil.copy2(legacy_db, DB_FILE)
+    except Exception:
+        pass
 _local = threading.local()
 
 

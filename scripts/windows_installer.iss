@@ -4,7 +4,7 @@
 #define MyAppName "TubeMerge"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "TubeMerge Inc."
-#define MyAppURL "https://videoplaylistmerger.com"
+#define MyAppURL "https://tubemerger.com"
 #define MyAppExeName "TubeMerge.exe"
 
 [Setup]

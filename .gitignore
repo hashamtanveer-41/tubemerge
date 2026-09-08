@@ -40,6 +40,7 @@ yarn-error.log*
 *.db-shm
 *.lic
 .videoplaylistmerger/
+.tubemerger/
 temp_workdir/
 .write_test
 output/

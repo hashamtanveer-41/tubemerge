@@ -47,6 +47,7 @@ async def start_merge(
     background_tasks.add_task(
         TelemetryService.track_job_triggered,
         clip_count=clip_count,
+        preset=payload.canvas_preset or 'auto',
     )
 
     # ── Monetization: open browser to ad-supported wait page ─────────────────

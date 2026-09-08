@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "YouTube Playlist Merger desktop application"
 readme = "README.md"
 authors = [
-    { name = "TubeMerge Team", email = "support@videoplaylistmerger.com" }
+    { name = "TubeMerge Team", email = "support@tubemerger.com" }
 ]
 license = { text = "MIT" }
 requires-python = ">=3.10"
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://videoplaylistmerger.com"
+Homepage = "https://tubemerger.com"
 
 [project.scripts]
 tubemerge = "tubemerge.app:run"

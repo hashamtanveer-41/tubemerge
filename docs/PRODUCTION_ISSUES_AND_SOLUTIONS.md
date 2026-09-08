@@ -25,9 +25,9 @@ Desktop client tools cannot assume root privileges or an existing Python virtual
    Implemented `BinaryService` with an ordered discovery hierarchy:
    $$\text{Path} = \text{Bundled Data Binaries} \to \sim/\text{.local/bin} \to \text{System PATH} \to \text{Python Module Wrapper}$$
 2. **Safe Workspace Fallback**:
-   In `core/settings.py`, paths verify write permissions. If `~/.videoplaylistmerger` is read-only, it automatically falls back to `<project_root>/.data/`.
+   In `core/settings.py`, paths verify write permissions. If `~/.tubemerger` is read-only, it automatically falls back to `<project_root>/.data/`.
 3. **Automated Static Toolchain Bootstrapping**:
-   Built `download_ffmpeg()` and `download_ytdlp()` to fetch pre-compiled, statically-linked binaries (John Van Sickle builds for FFmpeg, official standalone binaries for yt-dlp) directly into `~/.videoplaylistmerger/bin/` with POSIX `chmod +x` permissions.
+   Built `download_ffmpeg()` and `download_ytdlp()` to fetch pre-compiled, statically-linked binaries (John Van Sickle builds for FFmpeg, official standalone binaries for yt-dlp) directly into `~/.tubemerger/bin/` with POSIX `chmod +x` permissions.
 
 ### Why This Solution Works
 By bundling static, self-contained binaries decoupled from the host distribution's package manager, the application achieves deterministic behavior across Ubuntu, Debian, Fedora, and Arch without requiring sudo access or breaking system packages.
@@ -44,7 +44,7 @@ Downloaded file not found for 'Clip Title'
 ```
 
 ### Root Cause
-When `yt-dlp` runs inside a subshell or when the static `ffmpeg` binary resides in a non-standard directory (`~/.videoplaylistmerger/bin/`), `yt-dlp` cannot automatically discover `ffmpeg` unless it is in the global `PATH` environment variable of that child process. Furthermore, output templates with hardcoded `.mp4` extensions caused conflicts when `yt-dlp` merged streams into `.mkv` or `.webm` intermediate containers.
+When `yt-dlp` runs inside a subshell or when the static `ffmpeg` binary resides in a non-standard directory (`~/.tubemerger/bin/`), `yt-dlp` cannot automatically discover `ffmpeg` unless it is in the global `PATH` environment variable of that child process. Furthermore, output templates with hardcoded `.mp4` extensions caused conflicts when `yt-dlp` merged streams into `.mkv` or `.webm` intermediate containers.
 
 ### Engineering Approach & Solution
 1. **Explicit Binary Injection**:

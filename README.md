@@ -168,7 +168,7 @@ PRODUCTION_WEB_URL: str = "https://tubemerger.com"
 ### 1. Prerequisites
 - **Python 3.10+** (Python 3.10, 3.11, 3.12, 3.13, 3.14 supported)
 - **Node.js 18+ & npm** (only needed if building frontend from source)
-- **FFmpeg & yt-dlp** (Auto-detected from PATH or automatically downloaded on first launch to `~/.videoplaylistmerger/bin/`)
+- **FFmpeg & yt-dlp** (Auto-detected from PATH or automatically downloaded on first launch to `~/.tubemerger/bin/`)
 
 ### 2. Installation
 ```bash

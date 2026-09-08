@@ -2,10 +2,12 @@
 
 FOSS refactor: all quota enforcement, license checks, hardware fingerprinting,
 and billable-request telemetry removed. Unlimited merges for all users.
+Anonymous Aptabase telemetry tracks completion counters and error rates.
 """
 
 import asyncio
 import json
+import time
 import uuid
 from typing import Optional, List
 
@@ -17,6 +19,7 @@ from tubemerge.apps.playlists.services import PlaylistMetadataService
 from tubemerge.apps.merger.models import ProgressSnapshot, PipelineStatus
 from tubemerge.apps.merger.schemas import StartMergeRequest, StartMergeResponse, CancelResponse
 from tubemerge.apps.merger.services.engine import MergeEngine, MergeJobSpec
+from tubemerge.apps.telemetry.service import TelemetryService
 
 
 class MergeController:
@@ -46,6 +49,7 @@ class MergeController:
             raise HTTPException(status_code=503, detail={"error": str(exc)})
 
         job_id = session_id or uuid.uuid4().hex[:8]
+        start_time = time.time()
 
         job_spec = MergeJobSpec(
             playlist_url=payload.url,
@@ -67,6 +71,20 @@ class MergeController:
                 PipelineStatus.DONE, PipelineStatus.ERROR, PipelineStatus.CANCELLED
             ):
                 self.active_engine = None
+                if snapshot.status == PipelineStatus.DONE:
+                    duration = time.time() - start_time
+                    clip_cnt = len(job_spec.selected_indices) if job_spec.selected_indices else None
+                    TelemetryService.track_job_completed(duration_seconds=duration, clip_count=clip_cnt)
+                elif snapshot.status == PipelineStatus.ERROR:
+                    err_msg = str(snapshot.error or snapshot.message or "")
+                    err_type = (
+                        "ffmpeg_error" if "ffmpeg" in err_msg.lower()
+                        else ("ytdlp_error" if "ytdlp" in err_msg.lower() or "download" in err_msg.lower()
+                              else "pipeline_error")
+                    )
+                    TelemetryService.track_job_failed(error_type=err_type)
+                elif snapshot.status == PipelineStatus.CANCELLED:
+                    TelemetryService.track_job_cancelled()
 
         self.active_engine = MergeEngine(
             job_spec=job_spec,
@@ -125,5 +143,6 @@ class MergeController:
     def cancel_merge(self) -> CancelResponse:
         if self.active_engine:
             self.active_engine.cancel()
+            TelemetryService.track_job_cancelled()
             return CancelResponse(status="cancelling", message="Cancellation token dispatched.")
         return CancelResponse(status="idle", message="No active job found.")

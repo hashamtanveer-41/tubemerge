@@ -1,19 +1,28 @@
-"""Privacy-Preserving Counter Telemetry Service.
+"""Privacy-Preserving Counter Telemetry Service for TubeMerger.
 
 PRIVACY GUARANTEES:
   - Raw playlist URLs are NEVER sent, logged, or stored.
   - Channel names, video titles, account handles are NEVER captured.
-  - Clip counts are bucketed ("small" ≤ 20 clips / "large" > 20) so exact
-    quantities are not exposed.
-  - Only anonymous scalar event counters are tracked via Aptabase (GDPR compliant).
+  - User IPs are never stored by Aptabase (GDPR compliant).
+  - Only anonymous scalar event counters & buckets are tracked via Aptabase.
+
+Aptabase Cloud Events:
+  - app_started: App launch, DAU, OS & version distribution
+  - playlist_inspected: Playlist URL fetched & parsed
+  - playlist_merge_started: User initiated a download & stitch
+  - playlist_merge_completed: Pipeline completed rendering successfully
+  - playlist_merge_failed: Pipeline encountered an error
+  - playlist_merge_cancelled: User cancelled an active job
 
 To disable telemetry entirely: set TELEMETRY_APP_KEY = "" in config.py.
 """
 
+import asyncio
 import datetime
 import logging
 import platform
 import random
+import threading
 import time
 import httpx
 
@@ -41,23 +50,54 @@ _SYSTEM_PROPS = {
     "osVersion": platform.release(),
     "deviceModel": platform.machine() or "PC",
     "isDebug": getattr(settings, "DEBUG", False),
-    "appVersion": getattr(settings, "VERSION", "1.0.0"),
+    "appVersion": getattr(settings, "VERSION", "1.0.1"),
     "sdkVersion": "aptabase-python@0.1.0",
 }
 
 
-class TelemetryService:
-    """Fire-and-forget anonymous event counter for Aptabase.
+def _bucket_clips(clip_count: int) -> str:
+    if clip_count <= 5:
+        return "1-5"
+    if clip_count <= 15:
+        return "6-15"
+    if clip_count <= 30:
+        return "16-30"
+    if clip_count <= 50:
+        return "31-50"
+    return "50+"
 
-    All methods are async-safe and silently swallow network errors so
-    telemetry failures never impact the user experience.
-    """
+
+def _bucket_duration(duration_seconds: float) -> str:
+    if duration_seconds < 60:
+        return "<1m"
+    if duration_seconds < 300:
+        return "1-5m"
+    if duration_seconds < 900:
+        return "5-15m"
+    return "15m+"
+
+
+class TelemetryService:
+    """Thread-safe, fire-and-forget anonymous event counter for Aptabase."""
 
     @staticmethod
-    async def _send(event_name: str, props: dict | None = None) -> None:
-        """POST a single anonymous event to Aptabase. No-ops if key not configured."""
+    def _send_sync(payload: dict) -> None:
+        """Synchronous HTTP POST to Aptabase, run in background thread."""
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                res = client.post(_APTABASE_ENDPOINT, headers=_HEADERS, json=payload)
+                if res.status_code == 200:
+                    logger.debug("Aptabase event '%s' sent successfully", payload.get("eventName"))
+                else:
+                    logger.debug("Aptabase returned status %s: %s", res.status_code, res.text)
+        except Exception as exc:
+            logger.debug("Telemetry send failed (non-critical): %s", exc)
+
+    @classmethod
+    def _dispatch(cls, event_name: str, props: dict | None = None) -> None:
+        """Dispatch event in a daemon thread so it never blocks any thread or loop."""
         if not TELEMETRY_APP_KEY:
-            return  # Telemetry disabled
+            return
 
         payload = {
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -67,35 +107,60 @@ class TelemetryService:
             "props": props or {},
         }
 
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                res = await client.post(_APTABASE_ENDPOINT, headers=_HEADERS, json=payload)
-                if res.status_code == 200:
-                    logger.debug("Aptabase telemetry event '%s' sent successfully", event_name)
-                else:
-                    logger.debug("Aptabase telemetry returned status %s: %s", res.status_code, res.text)
-        except Exception as exc:
-            # Never propagate telemetry errors — they are non-critical
-            logger.debug("Telemetry send failed (non-critical): %s", exc)
+        # Run completely decoupled in a daemon thread
+        threading.Thread(target=cls._send_sync, args=(payload,), daemon=True).start()
+
+    @classmethod
+    async def _send(cls, event_name: str, props: dict | None = None) -> None:
+        """Async compatibility wrapper."""
+        cls._dispatch(event_name, props)
 
     @classmethod
     async def track_app_launch(cls) -> None:
         """Call once when the desktop application boots up."""
-        await cls._send("app_started")
+        cls._dispatch("app_started")
 
     @classmethod
-    async def track_job_triggered(cls, clip_count: int) -> None:
-        """Call when a playlist merge job is dispatched."""
-        size_bucket = "small" if clip_count <= TELEMETRY_SMALL_THRESHOLD else "large"
-        await cls._send(
-            "playlist_merge_started",
-            props={"size_bucket": size_bucket},
+    def track_playlist_inspected(cls, clip_count: int) -> None:
+        """Call when a playlist URL is fetched and parsed."""
+        cls._dispatch(
+            "playlist_inspected",
+            props={
+                "clip_count_bucket": _bucket_clips(clip_count),
+                "clip_count": clip_count,
+            },
         )
 
     @classmethod
-    async def track_job_completed(cls, duration_seconds: float | None = None) -> None:
-        """Call when a playlist merge job finishes."""
+    def track_job_triggered(cls, clip_count: int, preset: str = "auto") -> None:
+        """Call when a playlist merge job is initiated."""
+        cls._dispatch(
+            "playlist_merge_started",
+            props={
+                "clip_count_bucket": _bucket_clips(clip_count),
+                "clip_count": clip_count,
+                "preset": preset,
+            },
+        )
+
+    @classmethod
+    def track_job_completed(cls, duration_seconds: float | None = None, clip_count: int | None = None) -> None:
+        """Call when a playlist merge job finishes rendering."""
         props = {}
         if duration_seconds is not None:
-            props["duration_bucket"] = "<1m" if duration_seconds < 60 else ("<5m" if duration_seconds < 300 else "5m+")
-        await cls._send("playlist_merge_completed", props=props)
+            props["duration_bucket"] = _bucket_duration(duration_seconds)
+            props["duration_seconds"] = int(duration_seconds)
+        if clip_count is not None:
+            props["clip_count"] = clip_count
+            props["clip_count_bucket"] = _bucket_clips(clip_count)
+        cls._dispatch("playlist_merge_completed", props=props)
+
+    @classmethod
+    def track_job_failed(cls, error_type: str = "general_error") -> None:
+        """Call when a playlist merge job fails."""
+        cls._dispatch("playlist_merge_failed", props={"error_type": error_type})
+
+    @classmethod
+    def track_job_cancelled(cls) -> None:
+        """Call when an active merge job is cancelled by the user."""
+        cls._dispatch("playlist_merge_cancelled")
