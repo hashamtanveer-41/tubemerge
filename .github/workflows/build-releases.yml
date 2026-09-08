@@ -46,13 +46,14 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgirepository1.0-dev libcairo2-dev libwebkit2gtk-4.1-dev
+          sudo apt-get install -y libgirepository1.0-dev libcairo2-dev libwebkit2gtk-4.1-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller pillow
+          if [ "$RUNNER_OS" = "Linux" ]; then pip install PyGObject pycairo; fi
 
       - name: Build Frontend Client (Zero-Admin Mode)
         working-directory: frontend

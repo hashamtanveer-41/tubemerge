@@ -10,6 +10,7 @@ Supports:
 import sys
 import os
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_all
 
 block_cipher = None
 
@@ -84,10 +85,45 @@ hidden_imports = [
     "pywebview",
 ]
 
+binaries = []
+
+# Collect PyWebView full platform modules, assets, and backends
+try:
+    wv_datas, wv_binaries, wv_hidden = collect_all("webview")
+    datas += wv_datas
+    binaries += wv_binaries
+    hidden_imports += wv_hidden
+except Exception:
+    pass
+
+# Linux-specific native GTK3 / WebKit2 GObject Introspection bindings
+if sys.platform.startswith("linux"):
+    try:
+        gi_datas, gi_binaries, gi_hidden = collect_all("gi")
+        datas += gi_datas
+        binaries += gi_binaries
+        hidden_imports += gi_hidden
+    except Exception:
+        pass
+
+    linux_gui_hidden = [
+        "gi",
+        "gi.repository",
+        "gi.repository.Gtk",
+        "gi.repository.Gdk",
+        "gi.repository.GLib",
+        "gi.repository.GObject",
+        "gi.repository.Gio",
+        "gi.repository.WebKit2",
+        "webview.platforms.gtk",
+        "webview.platforms.qt",
+    ]
+    hidden_imports.extend(linux_gui_hidden)
+
 a = Analysis(
     ["main.py"],
     pathex=[ROOT_DIR, os.path.join(ROOT_DIR, "src")],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hidden_imports,
     hookspath=[],

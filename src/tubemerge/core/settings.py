@@ -1,3 +1,4 @@
+import socket
 """Centralized Application Configuration (Django-style Settings)."""
 
 import os
@@ -129,6 +130,20 @@ AUDIO_CHANNELS = 2
 # ---------------------------------------------------------------------------
 # Network & Server
 # ---------------------------------------------------------------------------
+def find_available_port(host: str = "127.0.0.1", preferred_port: int = 7842) -> int:
+    """Tries preferred_port first; if occupied, asks the OS kernel for a free ephemeral port."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind((host, preferred_port))
+            return preferred_port
+        except OSError:
+            pass
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((host, 0))
+        return s.getsockname()[1]
+
 HOST = "127.0.0.1"
 PORT = 7842
 SERVER_URL = f"http://{HOST}:{PORT}"
