@@ -7,12 +7,6 @@ Mounts only the routers needed for the FOSS desktop client:
   - history    → local merge history log
   - queues     → merge queue management
   - system     → system info, output directory
-
-Removed (FOSS pivot):
-  - licensing  → deleted entirely
-  - auth       → cloud auth not needed for local-only app
-  - billing    → payments removed (free + ad-supported)
-  - admin      → internal only; excluded from shipped client
 """
 
 import os
@@ -22,7 +16,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from tubemerge.core import settings
 from tubemerge.db import init_db
@@ -47,7 +41,6 @@ async def lifespan(app: FastAPI):
     # Fire anonymous App_Launch telemetry (async, non-blocking)
     try:
         from tubemerge.apps.telemetry.service import TelemetryService
-        import asyncio
         TelemetryService.track_app_launch()
     except Exception:
         pass
@@ -71,6 +64,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Lightweight ping endpoint for instant readiness check without binary probing
+    @app.get("/api/ping")
+    async def ping():
+        return JSONResponse({"status": "ok", "app": settings.APP_NAME})
 
     # Core desktop app routers
     app.include_router(binaries_router)

@@ -11,7 +11,9 @@ Key design decisions for FOSS architecture:
 import atexit
 import os
 import signal
+import sys
 import subprocess
+_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 import threading
 import logging
 import time
@@ -181,6 +183,7 @@ class MergeEngine:
             text=True,
             bufsize=1,
             universal_newlines=True,
+            creationflags=_WIN_NO_WINDOW,
         )
         self._register_proc(proc)
         output_lines = []
@@ -230,6 +233,7 @@ class MergeEngine:
                 capture_output=True,
                 text=True,
                 timeout=30,
+            creationflags=_WIN_NO_WINDOW,
             )
             return float(result.stdout.strip())
         except Exception:

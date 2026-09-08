@@ -7,6 +7,8 @@ No licensing or capability checks — TubeMerge is 100% free and open-source.
 """
 
 import subprocess
+import sys
+_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 from pathlib import Path
 from typing import Optional, Callable
 

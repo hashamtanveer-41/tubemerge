@@ -1,25 +1,63 @@
+import os
 import re
+import sys
 import subprocess
 from typing import Optional
 
+_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
+
 class BinaryInspectorService:
-    @staticmethod
-    def get_ffmpeg_version(path: str) -> Optional[str]:
+    _cached_ffmpeg_version: Optional[str] = None
+    _cached_ytdlp_version: Optional[str] = None
+
+    @classmethod
+    def get_ffmpeg_version(cls, path: str) -> Optional[str]:
+        if cls._cached_ffmpeg_version:
+            return cls._cached_ffmpeg_version
         try:
-            res = subprocess.run([path, "-version"], capture_output=True, text=True, timeout=5)
+            res = subprocess.run(
+                [path, "-version"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                creationflags=_WIN_NO_WINDOW,
+            )
             if res.returncode == 0:
                 match = re.search(r"ffmpeg version\s+(\S+)", res.stdout)
-                return match.group(1) if match else "unknown"
+                version = match.group(1) if match else "unknown"
+                cls._cached_ffmpeg_version = version
+                return version
         except Exception:
             pass
         return None
 
-    @staticmethod
-    def get_ytdlp_version(path: str) -> Optional[str]:
+    @classmethod
+    def get_ytdlp_version(cls, path: str) -> Optional[str]:
+        if cls._cached_ytdlp_version:
+            return cls._cached_ytdlp_version
+
+        # In-process yt_dlp version check first (zero subprocess)
         try:
-            res = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5)
+            import yt_dlp
+            version = getattr(yt_dlp.version, "__version__", None)
+            if version:
+                cls._cached_ytdlp_version = str(version)
+                return cls._cached_ytdlp_version
+        except Exception:
+            pass
+
+        try:
+            res = subprocess.run(
+                [path, "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                creationflags=_WIN_NO_WINDOW,
+            )
             if res.returncode == 0:
-                return res.stdout.strip()
+                version = res.stdout.strip()
+                cls._cached_ytdlp_version = version
+                return version
         except Exception:
             pass
         return None

@@ -43,7 +43,7 @@ class SystemService:
             elif system == "Darwin":
                 subprocess.Popen(["open", str(target_dir)])
             elif system == "Windows":
-                subprocess.Popen(["explorer", str(target_dir)])
+                os.startfile(str(target_dir))
             return True
         except Exception:
             return False

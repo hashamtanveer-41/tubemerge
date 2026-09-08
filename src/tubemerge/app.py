@@ -4,8 +4,14 @@ import time
 import shutil
 import subprocess
 import threading
+import multiprocessing
 import urllib.request
 import webbrowser
+
+# CRITICAL: Prevent infinite subprocess fork bomb on Windows when packaged with PyInstaller
+multiprocessing.freeze_support()
+
+_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 
 # Ensure stdio streams are never None (critical for PyInstaller windowed / GUI mode on Windows)
 class _NullStream:
@@ -70,7 +76,7 @@ def _wait_for_server(timeout: float = 12.0) -> bool:
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            with urllib.request.urlopen(f"{settings.SERVER_URL}/api/health", timeout=0.5) as r:
+            with urllib.request.urlopen(f"{settings.SERVER_URL}/api/ping", timeout=0.5) as r:
                 if r.status == 200:
                     return True
         except Exception:
@@ -115,7 +121,8 @@ def _launch_desktop_window() -> None:
                 background_color="#0F0F0F",
             )
             webview.start()
-            launched_gui = True
+            # If native window was closed by the user, terminate application cleanly
+            sys.exit(0)
         except Exception as exc:
             print(f"Native PyWebView window unavailable ({exc}). Checking for standalone desktop browser mode...")
 
@@ -125,11 +132,14 @@ def _launch_desktop_window() -> None:
                 win_browser = _find_windows_chromium_browser()
                 if win_browser:
                     try:
-                        subprocess.Popen([
-                            win_browser,
-                            f"--app={url}",
-                            "--window-size=1280,820",
-                        ])
+                        subprocess.Popen(
+                            [
+                                win_browser,
+                                f"--app={url}",
+                                "--window-size=1280,820",
+                            ],
+                            creationflags=_WIN_NO_WINDOW,
+                        )
                         launched_gui = True
                         print(f"Launched standalone desktop app window via {win_browser}.")
                     except Exception as exc:

@@ -2,6 +2,8 @@
 
 import os
 import subprocess
+import sys
+_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 from pathlib import Path
 from typing import List, Optional
 
@@ -30,7 +32,7 @@ class VideoStitcherService:
             "-c", "copy",
             str(output_path),
         ]
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        res = subprocess.run(cmd, capture_output=True, text=True, creationflags=_WIN_NO_WINDOW)
         return res.returncode == 0 and output_path.exists() and output_path.stat().st_size > 0
 
     @staticmethod
@@ -75,7 +77,7 @@ class VideoStitcherService:
             "-codec", "copy",
             str(temp_out),
         ]
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        res = subprocess.run(cmd, capture_output=True, text=True, creationflags=_WIN_NO_WINDOW)
         if res.returncode == 0 and temp_out.exists() and temp_out.stat().st_size > 0:
             temp_out.replace(video_path)
             return True

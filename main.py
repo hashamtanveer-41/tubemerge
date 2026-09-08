@@ -3,7 +3,11 @@
 
 import os
 import sys
+import multiprocessing
 from pathlib import Path
+
+# CRITICAL: Prevent infinite subprocess fork bomb on Windows when frozen with PyInstaller
+multiprocessing.freeze_support()
 
 # Safeguard standard I/O streams in windowed (GUI) mode on Windows & macOS
 if sys.stdout is None or sys.stderr is None:

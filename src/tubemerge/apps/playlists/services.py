@@ -5,6 +5,8 @@ import logging
 import os
 import re
 import subprocess
+import sys
+_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 from typing import Optional, Tuple, Any, Dict
 
 from tubemerge.apps.playlists.models import Playlist, VideoClip
@@ -119,7 +121,7 @@ class PlaylistMetadataService:
                 clean_url,
             ]
             try:
-                res = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=45, creationflags=_WIN_NO_WINDOW)
                 if res.returncode == 0:
                     data = json.loads(res.stdout)
                     return self._parse_playlist_data(data, clean_url)
@@ -165,7 +167,7 @@ class PlaylistMetadataService:
                 video_url,
             ]
             try:
-                res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=20, creationflags=_WIN_NO_WINDOW)
                 if res.returncode == 0:
                     d = json.loads(res.stdout)
                     w = int(d.get("width") or 1920)
