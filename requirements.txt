@@ -10,8 +10,8 @@ fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 
 # ── Native desktop window ────────────────────────────────────────────────────
-# Optional: removes the dependency if you want browser-only mode.
 pywebview>=5.0
+pythonnet>=3.0.0; sys_platform == 'win32'
 
 # ── Image processing (thumbnail handling, banner generation) ─────────────────
 pillow>=10.0.0

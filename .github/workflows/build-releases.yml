@@ -54,6 +54,11 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller pillow
 
+      - name: Install Windows GUI Dependencies (pythonnet)
+        if: runner.os == 'Windows'
+        run: |
+          pip install pythonnet
+
       - name: Install Linux GUI Bindings (GTK3 & WebKit2)
         if: runner.os == 'Linux'
         run: |

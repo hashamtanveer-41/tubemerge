@@ -36,6 +36,7 @@ hidden_imports = [
     "uvicorn.logging",
     "uvicorn.loops",
     "uvicorn.loops.auto",
+    "uvicorn.loops.asyncio",
     "uvicorn.protocols",
     "uvicorn.protocols.http",
     "uvicorn.protocols.http.auto",
@@ -87,6 +88,15 @@ hidden_imports = [
 
 binaries = []
 
+# Collect Uvicorn full modules
+try:
+    uv_datas, uv_binaries, uv_hidden = collect_all("uvicorn")
+    datas += uv_datas
+    binaries += uv_binaries
+    hidden_imports += uv_hidden
+except Exception:
+    pass
+
 # Collect PyWebView full platform modules, assets, and backends
 try:
     wv_datas, wv_binaries, wv_hidden = collect_all("webview")
@@ -95,6 +105,26 @@ try:
     hidden_imports += wv_hidden
 except Exception:
     pass
+
+# Windows-specific native WinForms / WebView2 bindings
+if sys.platform.startswith("win"):
+    try:
+        clr_datas, clr_binaries, clr_hidden = collect_all("clr")
+        datas += clr_datas
+        binaries += clr_binaries
+        hidden_imports += clr_hidden
+    except Exception:
+        pass
+
+    windows_gui_hidden = [
+        "clr",
+        "pythonnet",
+        "webview.platforms.winforms",
+        "webview.platforms.edgechromium",
+        "webview.platforms.win32",
+        "asyncio.windows_events",
+    ]
+    hidden_imports.extend(windows_gui_hidden)
 
 # Linux-specific native GTK3 / WebKit2 GObject Introspection bindings
 if sys.platform.startswith("linux"):
