@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from tubemerge.utils.file_system import escape_posix_path
+from tubemerge.utils.process import get_hidden_subprocess_kwargs
 
 class VideoStitcherService:
     """Concatenates normalized segments and writes embedded MP4 chapters."""
@@ -32,7 +33,7 @@ class VideoStitcherService:
             "-c", "copy",
             str(output_path),
         ]
-        res = subprocess.run(cmd, capture_output=True, text=True, creationflags=_WIN_NO_WINDOW)
+        res = subprocess.run(cmd, capture_output=True, text=True, **get_hidden_subprocess_kwargs())
         return res.returncode == 0 and output_path.exists() and output_path.stat().st_size > 0
 
     @staticmethod
@@ -77,7 +78,7 @@ class VideoStitcherService:
             "-codec", "copy",
             str(temp_out),
         ]
-        res = subprocess.run(cmd, capture_output=True, text=True, creationflags=_WIN_NO_WINDOW)
+        res = subprocess.run(cmd, capture_output=True, text=True, **get_hidden_subprocess_kwargs())
         if res.returncode == 0 and temp_out.exists() and temp_out.stat().st_size > 0:
             temp_out.replace(video_path)
             return True

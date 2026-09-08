@@ -183,7 +183,7 @@ class MergeEngine:
             text=True,
             bufsize=1,
             universal_newlines=True,
-            creationflags=_WIN_NO_WINDOW,
+            **get_hidden_subprocess_kwargs(),
         )
         self._register_proc(proc)
         output_lines = []

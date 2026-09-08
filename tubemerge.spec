@@ -81,6 +81,9 @@ hidden_imports = [
     "tubemerge.apps.queues.services",
     "tubemerge.apps.telemetry",
     "tubemerge.apps.telemetry.service",
+    "tubemerge.utils",
+    "tubemerge.utils.file_system",
+    "tubemerge.utils.process",
     # Third party engines
     "httpx",
     "pywebview",

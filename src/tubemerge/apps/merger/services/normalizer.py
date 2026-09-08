@@ -6,13 +6,13 @@ resolution fractures, FPS mismatches, and audio desync in the final output.
 No licensing or capability checks — TubeMerge is 100% free and open-source.
 """
 
-import subprocess
 import sys
-_WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
+import subprocess
 from pathlib import Path
 from typing import Optional, Callable
 
 from tubemerge.core import settings
+from tubemerge.utils.process import get_hidden_subprocess_kwargs
 
 
 class VideoNormalizerService:
@@ -77,6 +77,7 @@ class VideoNormalizerService:
             stderr=subprocess.PIPE,
             text=True,
             bufsize=1,
+            **get_hidden_subprocess_kwargs(),
         )
 
         # Register process handle for SIGKILL on app exit
