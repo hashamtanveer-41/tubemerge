@@ -14,9 +14,10 @@ import signal
 import subprocess
 import threading
 import logging
+import time
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 
 from tubemerge.core import settings
@@ -176,19 +177,22 @@ class MergeEngine:
                         break
                     line_str = line.strip()
                     output_lines.append(line_str)
-                    if line_str.startswith("STATUS|") and on_progress_update:
-                        parts = line_str.split("|")
-                        if len(parts) >= 3:
-                            try:
-                                pct = float(parts[1].replace("%", "").strip())
-                            except ValueError:
-                                pct = 0.0
-                            raw_spd = parts[2].strip()
-                            spd = raw_spd.replace("i", "") if raw_spd and raw_spd != "Unknown speed" else ""
-                            now = time.time()
-                            if now - last_emit >= 0.25:
-                                last_emit = now
-                                on_progress_update(pct, spd)
+                    if "STATUS|" in line_str and on_progress_update:
+                        try:
+                            parts = line_str[line_str.find("STATUS|"):].split("|")
+                            if len(parts) >= 3:
+                                try:
+                                    pct = float(parts[1].replace("%", "").strip())
+                                except ValueError:
+                                    pct = 0.0
+                                raw_spd = parts[2].strip()
+                                spd = raw_spd.replace("i", "") if raw_spd and "Unknown" not in raw_spd else ""
+                                now = time.time()
+                                if now - last_emit >= 0.2:
+                                    last_emit = now
+                                    on_progress_update(pct, spd)
+                        except Exception:
+                            pass
             proc.wait(timeout=timeout)
             return proc.returncode, "\n".join(output_lines[-15:])
         finally:
