@@ -78,6 +78,13 @@ jobs:
       - name: Package Windows (.zip & installer)
         if: runner.os == 'Windows'
         run: |
+          New-Item -ItemType Directory -Force -Path "dist/TubeMerge/bin"
+          Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile "dist/TubeMerge/bin/yt-dlp.exe"
+          Invoke-WebRequest -Uri "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip" -OutFile "ffmpeg.zip"
+          Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg-extracted"
+          Get-ChildItem -Path "ffmpeg-extracted" -Recurse -Filter "ffmpeg.exe" | Copy-Item -Destination "dist/TubeMerge/bin/ffmpeg.exe"
+          Get-ChildItem -Path "ffmpeg-extracted" -Recurse -Filter "ffprobe.exe" | Copy-Item -Destination "dist/TubeMerge/bin/ffprobe.exe"
+          Remove-Item -Recurse -Force "ffmpeg.zip", "ffmpeg-extracted"
           Compress-Archive -Path dist/TubeMerge/* -DestinationPath dist/${{ matrix.artifact_name }}
           if (Test-Path "C:\Program Files (x86)\Inno Setup 6\iscc.exe") {
             $tag = "${{ github.ref_name }}"

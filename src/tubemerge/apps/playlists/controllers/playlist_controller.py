@@ -10,11 +10,8 @@ class PlaylistController:
     def _get_service(self) -> PlaylistMetadataService:
         try:
             ytdlp_path = self.binary_service.get_ytdlp_path()
-        except FileNotFoundError:
-            raise HTTPException(
-                status_code=503,
-                detail="yt-dlp binary is missing. Please click 'Install Binaries' in Settings."
-            )
+        except Exception:
+            ytdlp_path = None
         return PlaylistMetadataService(ytdlp_path=ytdlp_path)
 
     def fetch_playlist(self, payload: FetchPlaylistRequest) -> FetchPlaylistResponse:

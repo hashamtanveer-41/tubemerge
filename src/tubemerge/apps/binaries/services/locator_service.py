@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import stat
 from pathlib import Path
@@ -11,30 +12,48 @@ class BinaryLocatorService:
         self.binaries_dir.mkdir(parents=True, exist_ok=True)
 
     def which(self, name: str) -> Optional[Path]:
-        bundled = self.binaries_dir / name
-        if bundled.is_file() and os.access(bundled, os.X_OK):
-            return bundled
+        names = [name]
+        if sys.platform == "win32" and not name.endswith(".exe"):
+            names = [f"{name}.exe", name]
 
-        local_bin = Path.home() / ".local" / "bin" / name
-        if local_bin.is_file() and os.access(local_bin, os.X_OK):
-            return local_bin
+        for n in names:
+            # 1. Bundled in user app data binaries dir (~/.tubemerger/bin)
+            bundled = self.binaries_dir / n
+            if bundled.is_file() and (sys.platform == "win32" or os.access(bundled, os.X_OK)):
+                return bundled
 
-        found = shutil.which(name)
-        if found:
-            return Path(found)
+            # 2. Bundled inside application installation directory (C:\Program Files\TubeMerge\bin or dist/TubeMerge/bin)
+            if getattr(sys, "frozen", False):
+                app_dir = Path(sys.executable).parent
+            else:
+                app_dir = Path(__file__).resolve().parents[4]
+
+            for candidate in [app_dir / n, app_dir / "bin" / n]:
+                if candidate.is_file() and (sys.platform == "win32" or os.access(candidate, os.X_OK)):
+                    return candidate
+
+            # 3. User local bin (~/.local/bin)
+            local_bin = Path.home() / ".local" / "bin" / n
+            if local_bin.is_file() and (sys.platform == "win32" or os.access(local_bin, os.X_OK)):
+                return local_bin
+
+            # 4. System PATH
+            found = shutil.which(n)
+            if found:
+                return Path(found)
 
         return None
 
     def find_ffmpeg(self) -> str:
         path = self.which("ffmpeg")
         if not path:
-            raise FileNotFoundError("FFmpeg executable not found.")
+            raise FileNotFoundError("FFmpeg executable not found. Please click 'Install Binaries' in Settings.")
         return str(path)
 
     def find_ffprobe(self) -> str:
         path = self.which("ffprobe")
         if not path:
-            raise FileNotFoundError("FFprobe executable not found.")
+            raise FileNotFoundError("FFprobe executable not found. Please click 'Install Binaries' in Settings.")
         return str(path)
 
     def find_ytdlp(self) -> str:
@@ -42,15 +61,17 @@ class BinaryLocatorService:
         if path:
             return str(path)
 
-        try:
-            import yt_dlp
-            wrapper = self.binaries_dir / "yt-dlp"
-            if not wrapper.exists():
-                with open(wrapper, "w") as f:
-                    f.write("#!/usr/bin/env python3\nimport sys\nfrom yt_dlp import main\nsys.exit(main())\n")
-                wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-            return str(wrapper)
-        except ImportError:
-            pass
+        # On non-Windows platforms only, create a python wrapper script if yt_dlp is installed
+        if sys.platform != "win32":
+            try:
+                import yt_dlp
+                wrapper = self.binaries_dir / "yt-dlp"
+                if not wrapper.exists():
+                    with open(wrapper, "w") as f:
+                        f.write("#!/usr/bin/env python3\nimport sys\nfrom yt_dlp import main\nsys.exit(main())\n")
+                    wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+                return str(wrapper)
+            except ImportError:
+                pass
 
-        raise FileNotFoundError("yt-dlp executable not found.")
+        raise FileNotFoundError("yt-dlp executable not found. Please click 'Install Binaries' in Settings.")

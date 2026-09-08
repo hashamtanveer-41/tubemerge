@@ -2,9 +2,10 @@
 
 import json
 import logging
+import os
 import re
 import subprocess
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any, Dict
 
 from tubemerge.apps.playlists.models import Playlist, VideoClip
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class PlaylistMetadataService:
     """Encapsulates probing and extracting metadata for YouTube playlists and videos."""
 
-    def __init__(self, ytdlp_path: str):
+    def __init__(self, ytdlp_path: Optional[str] = None):
         self.ytdlp_path = ytdlp_path
 
     @staticmethod
@@ -24,40 +25,7 @@ class PlaylistMetadataService:
         url = raw_url.strip().strip("'\"").strip()
         return url
 
-    def fetch_playlist(self, url: str) -> Playlist:
-        """Fetch playlist metadata via yt-dlp flat-playlist mode."""
-        clean_url = self.sanitize_url(url)
-        if not clean_url:
-            raise ValueError("URL cannot be empty.")
-
-        cmd = [
-            self.ytdlp_path,
-            "-J",
-            "--flat-playlist",
-            "--no-warnings",
-            "--socket-timeout", "15",
-            "--retries", "1",
-            clean_url,
-        ]
-
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
-        except subprocess.TimeoutExpired:
-            raise TimeoutError("YouTube request timed out. Please check your internet connection.")
-        except Exception as exc:
-            raise RuntimeError(f"Failed to execute yt-dlp: {exc}")
-
-        if res.returncode != 0:
-            stderr = res.stderr.lower()
-            if "does not exist" in stderr or "404" in stderr or "not found" in stderr or "is private" in stderr:
-                raise ValueError("The playlist does not exist, is private, or the URL contains a typo.")
-            raise RuntimeError(f"Unable to fetch playlist: {res.stderr.strip()[:200]}")
-
-        try:
-            data = json.loads(res.stdout)
-        except json.JSONDecodeError:
-            raise RuntimeError("Invalid response received from yt-dlp parser.")
-
+    def _parse_playlist_data(self, data: Dict[str, Any], clean_url: str) -> Playlist:
         entries = []
         raw_entries = data.get("entries")
         if raw_entries is None and data.get("id"):
@@ -112,24 +80,99 @@ class PlaylistMetadataService:
             thumbnail=cover_thumb,
         )
 
-    def probe_canvas(self, video_url: str) -> Tuple[int, int, int]:
-        """Inspect actual stream metadata of the first video to determine master canvas."""
-        cmd = [
-            self.ytdlp_path,
-            "-j",
-            "--no-playlist",
-            "--no-warnings",
-            "--socket-timeout", "10",
-            video_url,
-        ]
+    def fetch_playlist(self, url: str) -> Playlist:
+        """Fetch playlist metadata via in-process yt_dlp or CLI fallback."""
+        clean_url = self.sanitize_url(url)
+        if not clean_url:
+            raise ValueError("URL cannot be empty.")
+
+        # 1. Primary: In-process yt_dlp Python module (fast, zero subprocess overhead, cross-platform)
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
-            if res.returncode == 0:
-                d = json.loads(res.stdout)
+            import yt_dlp
+            ydl_opts = {
+                "extract_flat": True,
+                "skip_download": True,
+                "quiet": True,
+                "no_warnings": True,
+                "socket_timeout": 15,
+                "retries": 1,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                data = ydl.extract_info(clean_url, download=False)
+                if data:
+                    return self._parse_playlist_data(data, clean_url)
+        except Exception as exc:
+            err_str = str(exc).lower()
+            if "does not exist" in err_str or "404" in err_str or "not found" in err_str or "is private" in err_str:
+                raise ValueError("The playlist does not exist, is private, or the URL contains a typo.")
+            logger.warning(f"In-process yt_dlp extraction failed: {exc}. Attempting CLI fallback...")
+
+        # 2. Secondary fallback: CLI subprocess if executable path exists
+        if self.ytdlp_path and os.path.isfile(self.ytdlp_path):
+            cmd = [
+                self.ytdlp_path,
+                "-J",
+                "--flat-playlist",
+                "--no-warnings",
+                "--socket-timeout", "15",
+                "--retries", "1",
+                clean_url,
+            ]
+            try:
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+                if res.returncode == 0:
+                    data = json.loads(res.stdout)
+                    return self._parse_playlist_data(data, clean_url)
+                else:
+                    stderr = res.stderr.lower()
+                    if "does not exist" in stderr or "404" in stderr or "not found" in stderr or "is private" in stderr:
+                        raise ValueError("The playlist does not exist, is private, or the URL contains a typo.")
+            except subprocess.TimeoutExpired:
+                raise TimeoutError("YouTube request timed out. Please check your internet connection.")
+            except Exception as exc:
+                logger.error(f"CLI yt-dlp execution failed: {exc}")
+
+        raise RuntimeError("Failed to fetch playlist. Please check your URL and internet connection.")
+
+    def probe_canvas(self, video_url: str) -> Tuple[int, int, int]:
+        """Inspect stream metadata to determine master canvas."""
+        # 1. In-process extraction
+        try:
+            import yt_dlp
+            ydl_opts = {
+                "skip_download": True,
+                "quiet": True,
+                "no_warnings": True,
+                "socket_timeout": 10,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                d = ydl.extract_info(video_url, download=False)
                 w = int(d.get("width") or 1920)
                 h = int(d.get("height") or 1080)
                 fps = int(round(float(d.get("fps") or 30)))
                 return w, h, fps
         except Exception:
             pass
+
+        # 2. CLI fallback
+        if self.ytdlp_path and os.path.isfile(self.ytdlp_path):
+            cmd = [
+                self.ytdlp_path,
+                "-j",
+                "--no-playlist",
+                "--no-warnings",
+                "--socket-timeout", "10",
+                video_url,
+            ]
+            try:
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+                if res.returncode == 0:
+                    d = json.loads(res.stdout)
+                    w = int(d.get("width") or 1920)
+                    h = int(d.get("height") or 1080)
+                    fps = int(round(float(d.get("fps") or 30)))
+                    return w, h, fps
+            except Exception:
+                pass
+
         return 1920, 1080, 30
