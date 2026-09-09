@@ -8,19 +8,45 @@ from typing import Dict, Any
 def get_clean_subprocess_env() -> Dict[str, str]:
     """Return a clean environment dictionary for spawning external subprocesses.
 
-    When running inside a PyInstaller frozen bundle on Linux, PyInstaller sets
-    LD_LIBRARY_PATH to its bundled _internal directory. External processes
-    (such as /usr/bin/python3 invoked by yt-dlp or system ffmpeg) inheriting this
-    LD_LIBRARY_PATH fail with symbol/version mismatch errors (e.g. OpenSSL/libcrypto).
+    When running inside a PyInstaller frozen bundle on Linux or macOS, PyInstaller sets
+    LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, etc. to its bundled _internal directory.
+    External processes (such as python3, yt-dlp, or system ffmpeg) inheriting these
+    variables fail with dynamic linker / symbol mismatch errors (e.g. OpenSSL/libcrypto).
 
-    PyInstaller preserves the pre-launch environment in LD_LIBRARY_PATH_ORIG.
+    PyInstaller preserves pre-launch environments in <VAR>_ORIG.
     """
     env = dict(os.environ)
-    if "LD_LIBRARY_PATH_ORIG" in env:
-        env["LD_LIBRARY_PATH"] = env["LD_LIBRARY_PATH_ORIG"]
-    else:
-        env.pop("LD_LIBRARY_PATH", None)
+
+    # Clean dynamic linker paths across Linux and macOS
+    for var in [
+        "LD_LIBRARY_PATH",
+        "DYLD_LIBRARY_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
+        "DYLD_FRAMEWORK_PATH",
+    ]:
+        orig = f"{var}_ORIG"
+        if orig in env:
+            env[var] = env[orig]
+        else:
+            env.pop(var, None)
+
+    # On macOS, ensure standard Homebrew, MacPorts, and user local bin are in PATH
+    if sys.platform == "darwin":
+        current_path = env.get("PATH", "")
+        extra_paths = [
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "/opt/local/bin",
+            os.path.expanduser("~/.local/bin"),
+        ]
+        parts = current_path.split(":") if current_path else []
+        for ep in extra_paths:
+            if ep not in parts and os.path.isdir(ep):
+                parts.insert(0, ep)
+        env["PATH"] = ":".join(parts)
+
     return env
+
 
 def get_hidden_subprocess_kwargs() -> Dict[str, Any]:
     """Return creationflags, startupinfo, and clean env for background subprocesses."""

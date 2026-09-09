@@ -28,6 +28,12 @@ class BinaryInstallerService:
         urllib.request.urlretrieve(url, dest)
         if sys.platform != "win32":
             dest.chmod(dest.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+        if sys.platform == "darwin":
+            try:
+                import subprocess
+                subprocess.run(["xattr", "-d", "com.apple.quarantine", str(dest)], capture_output=True)
+            except Exception:
+                pass
         return str(dest)
 
     def download_ffmpeg(self) -> Tuple[str, str]:
@@ -63,7 +69,14 @@ class BinaryInstallerService:
 
             ffmpeg_path.chmod(ffmpeg_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
             ffprobe_path.chmod(ffprobe_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+            try:
+                import subprocess
+                subprocess.run(["xattr", "-d", "com.apple.quarantine", str(ffmpeg_path)], capture_output=True)
+                subprocess.run(["xattr", "-d", "com.apple.quarantine", str(ffprobe_path)], capture_output=True)
+            except Exception:
+                pass
             return str(ffmpeg_path), str(ffprobe_path)
+
 
         else:
             # Linux static build

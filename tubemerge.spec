@@ -244,16 +244,19 @@ if sys.platform == "darwin":
         coll,
         name="TubeMerge.app",
         icon=app_icon,
-        bundle_identifier="com.tubemerge.desktop",
+        bundle_identifier="com.tubemerger.desktop",
         info_plist={
             "NSHighResolutionCapable": True,
             "LSBackgroundOnly": False,
             "CFBundleName": "TubeMerge",
             "CFBundleDisplayName": "TubeMerge",
-            "CFBundleIdentifier": "com.tubemerge.desktop",
-            "CFBundleVersion": "1.0.8",
-            "CFBundleShortVersionString": "1.0.8",
+            "CFBundleIdentifier": "com.tubemerger.desktop",
+            "CFBundleVersion": "1.0.9",
+            "CFBundleShortVersionString": "1.0.9",
 
+            "NSDownloadsFolderUsageDescription": "TubeMerger needs access to save downloaded videos to your Downloads folder.",
+            "NSDesktopFolderUsageDescription": "TubeMerger needs access to save downloaded videos to your Desktop.",
+            "NSMoviesFolderUsageDescription": "TubeMerger needs access to save downloaded videos to your Movies folder.",
             "NSAppTransportSecurity": {
                 "NSAllowsLocalNetworking": True,
                 "NSAllowsArbitraryLoads": True,
@@ -261,3 +264,4 @@ if sys.platform == "darwin":
             "NSRequiresAquaSystemAppearance": False,
         },
     )
+

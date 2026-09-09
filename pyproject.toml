@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tubemerger"
-version = "1.0.8"
+version = "1.0.9"
 description = "Merge YouTube playlists into a single video or separate files"
+
 readme = "README.md"
 authors = [
     { name = "TubeMerger Team", email = "support@tubemerger.com" }

@@ -6,10 +6,21 @@ from pathlib import Path
 from typing import Optional
 from tubemerge.core import settings
 
+def _unquarantine(path: Path) -> Path:
+    """Strip Gatekeeper quarantine attribute on macOS to prevent popups / SIGKILL."""
+    if sys.platform == "darwin" and path.is_file():
+        try:
+            import subprocess
+            subprocess.run(["xattr", "-d", "com.apple.quarantine", str(path)], capture_output=True)
+        except Exception:
+            pass
+    return path
+
 class BinaryLocatorService:
     def __init__(self, binaries_dir: Optional[Path] = None):
         self.binaries_dir = binaries_dir or settings.BINARIES_DIR
         self.binaries_dir.mkdir(parents=True, exist_ok=True)
+
 
     def which(self, name: str) -> Optional[Path]:
         names = [name]
@@ -27,7 +38,7 @@ class BinaryLocatorService:
                     except Exception:
                         pass
                 elif sys.platform == "win32" or os.access(bundled, os.X_OK):
-                    return bundled
+                    return _unquarantine(bundled)
 
             # 2. Bundled inside application installation directory
             # Windows: C:\Program Files\TubeMerge\bin
@@ -45,7 +56,7 @@ class BinaryLocatorService:
             ]
             for candidate in candidates:
                 if candidate.is_file() and (sys.platform == "win32" or os.access(candidate, os.X_OK)):
-                    return candidate
+                    return _unquarantine(candidate)
 
             # 3. macOS Homebrew & MacPorts paths (when launched from Finder without shell PATH)
             if sys.platform == "darwin":
@@ -56,17 +67,18 @@ class BinaryLocatorService:
                 ]
                 for mac_p in mac_candidates:
                     if mac_p.is_file() and os.access(mac_p, os.X_OK):
-                        return mac_p
+                        return _unquarantine(mac_p)
 
             # 4. User local bin (~/.local/bin)
             local_bin = Path.home() / ".local" / "bin" / n
             if local_bin.is_file() and (sys.platform == "win32" or os.access(local_bin, os.X_OK)):
-                return local_bin
+                return _unquarantine(local_bin)
 
             # 5. System PATH via shutil.which
             found = shutil.which(n)
             if found:
-                return Path(found)
+                return _unquarantine(Path(found))
+
 
         return None
 

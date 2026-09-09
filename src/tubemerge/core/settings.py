@@ -12,7 +12,8 @@ from typing import Dict, Any
 APP_NAME = "TubeMerge"
 APP_TAGLINE = "YouTube Playlist Merger"
 DOMAIN = "tubemerger.com"
-VERSION = "1.0.8"
+VERSION = "1.0.9"
+
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +43,8 @@ def _resolve_data_dir() -> Path:
         test_file.unlink()
         return candidate
     except Exception:
-        fallback = PROJECT_ROOT / ".data"
+        import tempfile
+        fallback = Path(tempfile.gettempdir()) / ".tubemerger"
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
 
@@ -56,8 +58,9 @@ TEMP_WORKDIR.mkdir(parents=True, exist_ok=True)
 SETTINGS_FILE = APP_DATA_DIR / "settings.json"
 
 def _resolve_output_dir() -> Path:
-    """Resolve default video output directory."""
-    for candidate in [USER_HOME / "Videos", USER_HOME / "Downloads", PROJECT_ROOT / "output"]:
+    """Resolve default video output directory (Movies on macOS, Videos on Win/Linux, Downloads as fallback)."""
+    candidates = [USER_HOME / "Movies", USER_HOME / "Videos", USER_HOME / "Downloads"]
+    for candidate in candidates:
         try:
             candidate.mkdir(parents=True, exist_ok=True)
             test_file = candidate / ".write_test"
@@ -66,9 +69,11 @@ def _resolve_output_dir() -> Path:
             return candidate
         except Exception:
             continue
-    fallback = PROJECT_ROOT / "output"
+    import tempfile
+    fallback = Path(tempfile.gettempdir()) / "TubeMerger_Output"
     fallback.mkdir(parents=True, exist_ok=True)
     return fallback
+
 
 DEFAULT_OUTPUT_DIR = _resolve_output_dir()
 

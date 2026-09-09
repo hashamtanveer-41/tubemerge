@@ -56,6 +56,30 @@ class TestProcessEnvironmentSanity(unittest.TestCase):
             self.assertIn("env", kwargs)
             self.assertNotIn("LD_LIBRARY_PATH", kwargs["env"])
 
+    def test_macos_dyld_clean_env(self):
+        """On macOS, DYLD_* variables set by PyInstaller must be stripped/restored."""
+        with patch.dict(os.environ, {
+            "DYLD_LIBRARY_PATH": "/tmp/app/Contents/MacOS",
+            "DYLD_FALLBACK_LIBRARY_PATH": "/tmp/app",
+            "DYLD_FRAMEWORK_PATH": "/tmp/app/Frameworks",
+        }, clear=False):
+            for v in ["DYLD_LIBRARY_PATH_ORIG", "DYLD_FALLBACK_LIBRARY_PATH_ORIG", "DYLD_FRAMEWORK_PATH_ORIG"]:
+                if v in os.environ:
+                    del os.environ[v]
+            clean_env = get_clean_subprocess_env()
+            self.assertNotIn("DYLD_LIBRARY_PATH", clean_env)
+            self.assertNotIn("DYLD_FALLBACK_LIBRARY_PATH", clean_env)
+            self.assertNotIn("DYLD_FRAMEWORK_PATH", clean_env)
+
+    def test_macos_paths_in_clean_env(self):
+        """On macOS, standard Homebrew and MacPorts directories should be present in PATH."""
+        with patch("sys.platform", "darwin"):
+            with patch("os.path.isdir", return_value=True):
+                clean_env = get_clean_subprocess_env()
+                self.assertIn("/opt/homebrew/bin", clean_env.get("PATH", ""))
+                self.assertIn("/usr/local/bin", clean_env.get("PATH", ""))
+
+
     def test_get_hidden_subprocess_kwargs_windows_safety(self):
         """On Windows, creationflags must prevent console window flashing."""
         with patch("sys.platform", "win32"):
@@ -64,6 +88,8 @@ class TestProcessEnvironmentSanity(unittest.TestCase):
                 kwargs = get_hidden_subprocess_kwargs()
                 self.assertEqual(kwargs.get("creationflags"), 0x08000000)
                 self.assertIn("startupinfo", kwargs)
+
+
 
 
 
