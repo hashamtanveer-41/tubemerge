@@ -148,27 +148,10 @@ tubemerger/
 
 ---
 
-## Recommended GitHub Repository Topics
-
-Add these topics in **Settings → Topics** for maximum search discoverability:
-
-```
-youtube-playlist-downloader  youtube-playlist-merger  merge-youtube-playlist
-ad-free-downloader           open-source-desktop-app  skip-videos
-granular-playlist-control    multi-quality-download   real-time-download-speed
-download-speed-tracker       stitched-video-download  separate-video-download
-youtube-downloader           ffmpeg                   yt-dlp
-offline-video-downloader     privacy-first            chapter-embedding
-cross-platform               mit-license
-```
-
----
-
 ## Privacy-Preserving Analytics (Aptabase)
 
 TubeMerger incorporates privacy-first, GDPR-compliant volumetric telemetry via [Aptabase](https://aptabase.com).
 
-- **App Key**: `A-EU-1063594697`
 - **Region**: EU (`https://eu.aptabase.com`)
 
 ### Privacy Guarantees
