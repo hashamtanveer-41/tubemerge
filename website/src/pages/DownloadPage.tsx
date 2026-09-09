@@ -374,22 +374,6 @@ export default function DownloadPage({
               <p className="text-[15px] sm:text-[16px] text-white/60">
                 100% Free &amp; open-source desktop app for all operating systems.
               </p>
-              {/* Live release badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[12px] text-white/40">
-                {releaseLoading ? (
-                  <span>Checking for latest release…</span>
-                ) : (
-                  <>
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-                    <span>
-                      Latest: <strong className="text-white/70">v{release.version}</strong>
-                      {release.publishedAt && (
-                        <> &mdash; {new Date(release.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</>
-                      )}
-                    </span>
-                  </>
-                )}
-              </div>
             </div>
 
             {/* 3 Minimal Buttons in a Clean Grid */}
