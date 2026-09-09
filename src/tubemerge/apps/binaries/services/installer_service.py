@@ -49,28 +49,18 @@ class BinaryInstallerService:
             return str(self.binaries_dir / "ffmpeg.exe"), str(self.binaries_dir / "ffprobe.exe")
 
         elif sys.platform == "darwin":
-            # macOS static build from yt-dlp/FFmpeg-Builds
+            # macOS static Mach-O build from eugeneware/ffmpeg-static
             arch = platform.machine().lower()
-            if "arm" in arch or "aarch64" in arch:
-                zip_url = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macosarm64-gpl.zip"
-            else:
-                zip_url = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macos64-gpl.zip"
+            tag = "arm64" if ("arm" in arch or "aarch64" in arch) else "x64"
+            ffmpeg_url = f"https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-darwin-{tag}"
+            ffprobe_url = f"https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffprobe-darwin-{tag}"
 
-            zip_dest = self.binaries_dir / "ffmpeg.zip"
-            urllib.request.urlretrieve(zip_url, zip_dest)
-
-            with zipfile.ZipFile(zip_dest, "r") as zf:
-                for member in zf.namelist():
-                    if member.endswith("/ffmpeg") or member == "ffmpeg":
-                        with zf.open(member) as source, open(self.binaries_dir / "ffmpeg", "wb") as target:
-                            target.write(source.read())
-                    elif member.endswith("/ffprobe") or member == "ffprobe":
-                        with zf.open(member) as source, open(self.binaries_dir / "ffprobe", "wb") as target:
-                            target.write(source.read())
-
-            zip_dest.unlink(missing_ok=True)
             ffmpeg_path = self.binaries_dir / "ffmpeg"
             ffprobe_path = self.binaries_dir / "ffprobe"
+
+            urllib.request.urlretrieve(ffmpeg_url, ffmpeg_path)
+            urllib.request.urlretrieve(ffprobe_url, ffprobe_path)
+
             ffmpeg_path.chmod(ffmpeg_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
             ffprobe_path.chmod(ffprobe_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
             return str(ffmpeg_path), str(ffprobe_path)
