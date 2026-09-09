@@ -13,7 +13,7 @@ multiprocessing.freeze_support()
 
 _WIN_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 
-# Ensure stdio streams are never None (critical for PyInstaller windowed / GUI mode on Windows)
+# Ensure stdio streams are never None (critical for PyInstaller windowed / GUI mode on Windows & macOS)
 class _NullStream:
     def write(self, text: str) -> int:
         return len(text)
@@ -109,7 +109,7 @@ def _launch_desktop_window() -> None:
 
     launched_gui = False
     if has_display:
-        # 1. Primary: Native PyWebView GTK / Cocoa / WinForms / WebView2 desktop frame
+        # 1. Primary: Native PyWebView GTK / Cocoa WebKit / WinForms / WebView2 desktop frame
         try:
             import webview
             window = webview.create_window(
@@ -144,6 +144,21 @@ def _launch_desktop_window() -> None:
                         print(f"Launched standalone desktop app window via {win_browser}.")
                     except Exception as exc:
                         print(f"Failed to launch Windows chromeless app: {exc}")
+            elif sys.platform == "darwin":
+                mac_browsers = [
+                    "/Applications/Google Chrome.app",
+                    "/Applications/Brave Browser.app",
+                    "/Applications/Microsoft Edge.app",
+                ]
+                for b_app in mac_browsers:
+                    if os.path.isdir(b_app):
+                        try:
+                            subprocess.Popen(["open", "-a", b_app, "--args", f"--app={url}"])
+                            launched_gui = True
+                            print(f"Launched standalone desktop app window via {b_app}.")
+                            break
+                        except Exception:
+                            continue
             else:
                 chromium_bins = ["google-chrome", "chromium", "chromium-browser", "brave-browser", "microsoft-edge"]
                 for bin_name in chromium_bins:

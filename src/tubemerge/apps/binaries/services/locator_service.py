@@ -22,22 +22,41 @@ class BinaryLocatorService:
             if bundled.is_file() and (sys.platform == "win32" or os.access(bundled, os.X_OK)):
                 return bundled
 
-            # 2. Bundled inside application installation directory (C:\Program Files\TubeMerge\bin or dist/TubeMerge/bin)
+            # 2. Bundled inside application installation directory
+            # Windows: C:\Program Files\TubeMerge\bin
+            # macOS: TubeMerge.app/Contents/MacOS/bin or TubeMerge.app/Contents/Resources/bin
             if getattr(sys, "frozen", False):
                 app_dir = Path(sys.executable).parent
             else:
                 app_dir = Path(__file__).resolve().parents[4]
 
-            for candidate in [app_dir / n, app_dir / "bin" / n]:
+            candidates = [
+                app_dir / n,
+                app_dir / "bin" / n,
+                app_dir.parent / "Resources" / n,
+                app_dir.parent / "Resources" / "bin" / n,
+            ]
+            for candidate in candidates:
                 if candidate.is_file() and (sys.platform == "win32" or os.access(candidate, os.X_OK)):
                     return candidate
 
-            # 3. User local bin (~/.local/bin)
+            # 3. macOS Homebrew & MacPorts paths (when launched from Finder without shell PATH)
+            if sys.platform == "darwin":
+                mac_candidates = [
+                    Path("/opt/homebrew/bin") / n,      # Apple Silicon Homebrew (M1/M2/M3/M4)
+                    Path("/usr/local/bin") / n,         # Intel Homebrew
+                    Path("/opt/local/bin") / n,         # MacPorts
+                ]
+                for mac_p in mac_candidates:
+                    if mac_p.is_file() and os.access(mac_p, os.X_OK):
+                        return mac_p
+
+            # 4. User local bin (~/.local/bin)
             local_bin = Path.home() / ".local" / "bin" / n
             if local_bin.is_file() and (sys.platform == "win32" or os.access(local_bin, os.X_OK)):
                 return local_bin
 
-            # 4. System PATH
+            # 5. System PATH via shutil.which
             found = shutil.which(n)
             if found:
                 return Path(found)

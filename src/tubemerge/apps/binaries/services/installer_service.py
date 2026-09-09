@@ -1,6 +1,7 @@
 import os
 import sys
 import stat
+import platform
 import tarfile
 import zipfile
 import urllib.request
@@ -46,7 +47,36 @@ class BinaryInstallerService:
 
             zip_dest.unlink(missing_ok=True)
             return str(self.binaries_dir / "ffmpeg.exe"), str(self.binaries_dir / "ffprobe.exe")
+
+        elif sys.platform == "darwin":
+            # macOS static build from yt-dlp/FFmpeg-Builds
+            arch = platform.machine().lower()
+            if "arm" in arch or "aarch64" in arch:
+                zip_url = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macosarm64-gpl.zip"
+            else:
+                zip_url = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macos64-gpl.zip"
+
+            zip_dest = self.binaries_dir / "ffmpeg.zip"
+            urllib.request.urlretrieve(zip_url, zip_dest)
+
+            with zipfile.ZipFile(zip_dest, "r") as zf:
+                for member in zf.namelist():
+                    if member.endswith("/ffmpeg") or member == "ffmpeg":
+                        with zf.open(member) as source, open(self.binaries_dir / "ffmpeg", "wb") as target:
+                            target.write(source.read())
+                    elif member.endswith("/ffprobe") or member == "ffprobe":
+                        with zf.open(member) as source, open(self.binaries_dir / "ffprobe", "wb") as target:
+                            target.write(source.read())
+
+            zip_dest.unlink(missing_ok=True)
+            ffmpeg_path = self.binaries_dir / "ffmpeg"
+            ffprobe_path = self.binaries_dir / "ffprobe"
+            ffmpeg_path.chmod(ffmpeg_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+            ffprobe_path.chmod(ffprobe_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+            return str(ffmpeg_path), str(ffprobe_path)
+
         else:
+            # Linux static build
             tar_url = "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
             tar_dest = self.binaries_dir / "ffmpeg.tar.xz"
             urllib.request.urlretrieve(tar_url, tar_dest)

@@ -129,6 +129,34 @@ if sys.platform.startswith("win"):
     ]
     hidden_imports.extend(windows_gui_hidden)
 
+# macOS-specific native Cocoa / WebKit PyObjC bindings
+if sys.platform == "darwin":
+    try:
+        objc_datas, objc_binaries, objc_hidden = collect_all("objc")
+        datas += objc_datas
+        binaries += objc_binaries
+        hidden_imports += objc_hidden
+    except Exception:
+        pass
+
+    try:
+        webkit_datas, webkit_binaries, webkit_hidden = collect_all("WebKit")
+        datas += webkit_datas
+        binaries += webkit_binaries
+        hidden_imports += webkit_hidden
+    except Exception:
+        pass
+
+    macos_gui_hidden = [
+        "objc",
+        "Foundation",
+        "AppKit",
+        "WebKit",
+        "Quartz",
+        "webview.platforms.cocoa",
+    ]
+    hidden_imports.extend(macos_gui_hidden)
+
 # Linux-specific native GTK3 / WebKit2 GObject Introspection bindings
 if sys.platform.startswith("linux"):
     try:
@@ -218,12 +246,17 @@ if sys.platform == "darwin":
         icon=app_icon,
         bundle_identifier="com.tubemerge.desktop",
         info_plist={
-            "NSHighResolutionCapable": "True",
-            "LSBackgroundOnly": "False",
+            "NSHighResolutionCapable": True,
+            "LSBackgroundOnly": False,
             "CFBundleName": "TubeMerge",
             "CFBundleDisplayName": "TubeMerge",
             "CFBundleIdentifier": "com.tubemerge.desktop",
-            "CFBundleVersion": "1.0.0",
-            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleVersion": "1.0.5",
+            "CFBundleShortVersionString": "1.0.5",
+            "NSAppTransportSecurity": {
+                "NSAllowsLocalNetworking": True,
+                "NSAllowsArbitraryLoads": True,
+            },
+            "NSRequiresAquaSystemAppearance": False,
         },
     )
