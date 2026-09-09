@@ -25,16 +25,17 @@ const BASE_URL =
   'https://github.com/hashamtanveer-41/tubemerger/releases/latest/download';
 
 export const STATIC_RELEASE: ReleaseData = {
-  version: '1.0.7',
+  version: '1.0.8',
   publishedAt: null,
   platforms: {
     win: {
       name: 'Windows',
       heading: 'Download for Windows',
-      versionInfo: 'v1.0.5 • Windows 10 / 11 • 64-bit',
+      versionInfo: 'Windows 10 / 11 • 64-bit',
       file: 'TubeMerge-Setup.exe',
       url: `${BASE_URL}/TubeMerge-Setup.exe`,
     },
+
     mac: {
       name: 'macOS',
       heading: 'Download for macOS',

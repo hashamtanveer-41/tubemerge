@@ -251,8 +251,9 @@ if sys.platform == "darwin":
             "CFBundleName": "TubeMerge",
             "CFBundleDisplayName": "TubeMerge",
             "CFBundleIdentifier": "com.tubemerge.desktop",
-            "CFBundleVersion": "1.0.5",
-            "CFBundleShortVersionString": "1.0.7",
+            "CFBundleVersion": "1.0.8",
+            "CFBundleShortVersionString": "1.0.8",
+
             "NSAppTransportSecurity": {
                 "NSAllowsLocalNetworking": True,
                 "NSAllowsArbitraryLoads": True,

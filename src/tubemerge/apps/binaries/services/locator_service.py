@@ -19,8 +19,15 @@ class BinaryLocatorService:
         for n in names:
             # 1. Bundled in user app data binaries dir (~/.tubemerger/bin)
             bundled = self.binaries_dir / n
-            if bundled.is_file() and (sys.platform == "win32" or os.access(bundled, os.X_OK)):
-                return bundled
+            if bundled.is_file():
+                # Clean up legacy broken dummy wrapper scripts (< 1KB)
+                if n.startswith("yt-dlp") and bundled.stat().st_size < 1024:
+                    try:
+                        bundled.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                elif sys.platform == "win32" or os.access(bundled, os.X_OK):
+                    return bundled
 
             # 2. Bundled inside application installation directory
             # Windows: C:\Program Files\TubeMerge\bin
@@ -80,17 +87,15 @@ class BinaryLocatorService:
         if path:
             return str(path)
 
-        # On non-Windows platforms only, create a python wrapper script if yt_dlp is installed
-        if sys.platform != "win32":
-            try:
-                import yt_dlp
-                wrapper = self.binaries_dir / "yt-dlp"
-                if not wrapper.exists():
-                    with open(wrapper, "w") as f:
-                        f.write("#!/usr/bin/env python3\nimport sys\nfrom yt_dlp import main\nsys.exit(main())\n")
-                    wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-                return str(wrapper)
-            except ImportError:
-                pass
+        # If missing, attempt automatic download of the official standalone release binary
+        try:
+            from tubemerge.apps.binaries.services.installer_service import BinaryInstallerService
+            installer = BinaryInstallerService(self.binaries_dir)
+            downloaded = installer.download_ytdlp()
+            if downloaded and Path(downloaded).is_file():
+                return str(downloaded)
+        except Exception:
+            pass
 
         raise FileNotFoundError("yt-dlp executable not found. Please click 'Install Binaries' in Settings.")
+

@@ -37,7 +37,24 @@ class BinaryInspectorService:
         if cls._cached_ytdlp_version:
             return cls._cached_ytdlp_version
 
-        # In-process yt_dlp version check first (zero subprocess)
+        # Test the actual executable first
+        if path:
+            try:
+                res = subprocess.run(
+                    [path, "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    **get_hidden_subprocess_kwargs(),
+                )
+                if res.returncode == 0:
+                    version = res.stdout.strip()
+                    cls._cached_ytdlp_version = version
+                    return version
+            except Exception:
+                pass
+
+        # In-process yt_dlp version check fallback
         try:
             import yt_dlp
             version = getattr(yt_dlp.version, "__version__", None)
@@ -47,18 +64,4 @@ class BinaryInspectorService:
         except Exception:
             pass
 
-        try:
-            res = subprocess.run(
-                [path, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                **get_hidden_subprocess_kwargs(),
-            )
-            if res.returncode == 0:
-                version = res.stdout.strip()
-                cls._cached_ytdlp_version = version
-                return version
-        except Exception:
-            pass
         return None

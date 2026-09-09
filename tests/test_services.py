@@ -77,9 +77,6 @@ class TestMetadataUrlSanitization(unittest.TestCase):
         clean = PlaylistMetadataService.sanitize_url(raw)
         self.assertEqual(clean, "https://www.youtube.com/playlist?list=PL123")
 
-if __name__ == "__main__":
-    unittest.main()
-
 class TestTelemetryService(unittest.TestCase):
     def test_telemetry_payload_structure(self):
         from tubemerge.apps.telemetry.service import TelemetryService, _SYSTEM_PROPS, _SESSION_ID
@@ -97,3 +94,25 @@ class TestFOSSController(unittest.TestCase):
         )
         self.assertEqual(spec.crf, 21)
         self.assertEqual(spec.canvas_preset, "auto")
+
+class TestProcessUtils(unittest.TestCase):
+    def test_clean_subprocess_env_removes_ld_library_path(self):
+        import os
+        from tubemerge.utils.process import get_clean_subprocess_env, get_hidden_subprocess_kwargs
+        with patch.dict(os.environ, {"LD_LIBRARY_PATH": "/some/internal/path"}, clear=False):
+            if "LD_LIBRARY_PATH_ORIG" in os.environ:
+                del os.environ["LD_LIBRARY_PATH_ORIG"]
+            env = get_clean_subprocess_env()
+            self.assertNotIn("LD_LIBRARY_PATH", env)
+
+    def test_clean_subprocess_env_restores_ld_library_path_orig(self):
+        import os
+        from tubemerge.utils.process import get_clean_subprocess_env
+        with patch.dict(os.environ, {"LD_LIBRARY_PATH": "/internal", "LD_LIBRARY_PATH_ORIG": "/orig/lib"}, clear=False):
+            env = get_clean_subprocess_env()
+            self.assertEqual(env.get("LD_LIBRARY_PATH"), "/orig/lib")
+
+if __name__ == "__main__":
+    unittest.main()
+
+

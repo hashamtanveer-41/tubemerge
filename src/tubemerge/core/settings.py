@@ -12,7 +12,8 @@ from typing import Dict, Any
 APP_NAME = "TubeMerge"
 APP_TAGLINE = "YouTube Playlist Merger"
 DOMAIN = "tubemerger.com"
-VERSION = "1.0.7"
+VERSION = "1.0.8"
+
 
 # ---------------------------------------------------------------------------
 # Filesystem Paths

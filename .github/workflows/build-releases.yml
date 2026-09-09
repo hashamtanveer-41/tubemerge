@@ -70,9 +70,14 @@ jobs:
           npm ci || npm install
           npm run build:client
 
+      - name: Run Release Sanity & Regression Tests
+        run: |
+          python -m unittest discover -s tests
+
       - name: Build Desktop Executable with PyInstaller
         run: |
           python -m PyInstaller --clean --noconfirm tubemerge.spec
+
 
       # ── Platform Packaging ─────────────────────────────────────────────────
       - name: Package Windows (.zip & installer)
@@ -115,8 +120,12 @@ jobs:
       - name: Package Linux (.tar.gz)
         if: runner.os == 'Linux'
         run: |
+          mkdir -p dist/TubeMerge/bin
+          curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o dist/TubeMerge/bin/yt-dlp
+          chmod +x dist/TubeMerge/bin/*
           cd dist
           tar -czvf ${{ matrix.artifact_name }} TubeMerge/
+
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4

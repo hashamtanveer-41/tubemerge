@@ -1,6 +1,7 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "updated": "2026-09-09",
+
   "assets": {
     "windows": "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Setup.exe",
     "macos": "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-macOS-x64.zip",

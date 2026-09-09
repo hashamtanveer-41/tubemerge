@@ -5,8 +5,9 @@
 #endif
 
 #ifndef MyAppVersion
-#define MyAppVersion "1.0.7"
+#define MyAppVersion "1.0.8"
 #endif
+
 
 #define MyAppPublisher "TubeMerge Inc."
 #define MyAppURL "https://tubemerger.com"

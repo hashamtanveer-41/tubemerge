@@ -234,7 +234,7 @@ class MergeEngine:
                 capture_output=True,
                 text=True,
                 timeout=30,
-            creationflags=_WIN_NO_WINDOW,
+                **get_hidden_subprocess_kwargs(),
             )
             return float(result.stdout.strip())
         except Exception:
@@ -319,6 +319,10 @@ class MergeEngine:
                     ))
 
                 rc, stderr_out = self._run_ytdlp_download(dl_cmd, on_progress_update=_single_progress)
+                if rc != 0:
+                    err_msg = (stderr_out or "").strip()
+                    safe_remove_directory(temp_dir)
+                    raise RuntimeError(f"Download failed for {clip.title}: {err_msg[:250] if err_msg else 'Unknown error'}")
 
                 candidates = [
                     p for p in downloads_dir.glob(f"{clean_title}.*")
@@ -364,6 +368,7 @@ class MergeEngine:
                 total_videos = len(selected_entries)
                 downloaded_files = []
                 durations = []
+                last_folder_err = ""
 
                 for idx, clip in enumerate(selected_entries, start=1):
                     if self.is_cancelled:
@@ -414,7 +419,8 @@ class MergeEngine:
                     rc, stderr_out = self._run_ytdlp_download(dl_cmd, on_progress_update=_folder_progress)
 
                     if rc != 0:
-                        logger.warning("Download failed for %s: %s", clip.title, (stderr_out or "")[:200])
+                        last_folder_err = (stderr_out or "").strip()
+                        logger.warning("Download failed for %s: %s", clip.title, last_folder_err[:200])
                         continue
 
                     candidates = [
@@ -426,7 +432,8 @@ class MergeEngine:
                         durations.append(float(clip.duration_seconds or 0))
 
                 if not downloaded_files:
-                    raise RuntimeError("No videos were successfully downloaded into folder.")
+                    err_suffix = f": {last_folder_err[:250]}" if last_folder_err else ""
+                    raise RuntimeError(f"No videos were successfully downloaded into folder{err_suffix}.")
 
                 safe_remove_directory(temp_dir)
                 try:
@@ -465,6 +472,7 @@ class MergeEngine:
 
             total_videos = len(selected_entries)
             raw_files = []
+            last_merge_err = ""
 
             # ── 3. Download phase ────────────────────────────────────────────
             for idx, clip in enumerate(selected_entries, start=1):
@@ -510,7 +518,8 @@ class MergeEngine:
                 rc, stderr_out = self._run_ytdlp_download(dl_cmd, on_progress_update=_merge_dl_progress)
 
                 if rc != 0:
-                    logger.warning("Download failed for %s: %s", clip.title, (stderr_out or "")[:200])
+                    last_merge_err = (stderr_out or "").strip()
+                    logger.warning("Download failed for %s: %s", clip.title, last_merge_err[:200])
                     continue
 
                 candidates = [
@@ -521,7 +530,8 @@ class MergeEngine:
                     raw_files.append((clip, candidates[0]))
 
             if not raw_files:
-                raise RuntimeError("No videos were successfully downloaded; nothing to merge.")
+                err_suffix = f": {last_merge_err[:250]}" if last_merge_err else ""
+                raise RuntimeError(f"No videos were successfully downloaded{err_suffix}; nothing to merge.")
 
             # ── 4. Normalization phase ───────────────────────────────────────
             normalized_files: List[Path] = []
