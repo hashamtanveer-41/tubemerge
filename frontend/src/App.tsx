@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useMergeApp } from '@/hooks/useMergeApp';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -11,10 +11,84 @@ import { SuccessModal } from '@/components/merge/SuccessModal';
 import { FloatingActionBar } from '@/components/merge/FloatingActionBar';
 import { Toast } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
+import { NoInternetModal } from '@/components/updates/NoInternetModal';
+import { ForceUpdateModal } from '@/components/updates/ForceUpdateModal';
+import { UpdateBanner } from '@/components/updates/UpdateBanner';
+import { checkForUpdates, UpdateCheckResult } from '@/services/api';
+import { UpdateInfo } from '@/types';
+
+// ---------------------------------------------------------------------------
+// Startup check state machine
+// ---------------------------------------------------------------------------
+type StartupState =
+  | 'checking'   // Running connectivity + update check
+  | 'offline'    // No internet detected
+  | 'update'     // Forced major update required
+  | 'ready';     // All checks passed — show workspace
 
 export function App() {
   const app = useMergeApp();
 
+  const [startupState, setStartupState] = useState<StartupState>('checking');
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+
+  // ── Run startup checks ─────────────────────────────────────────────────
+  const runChecks = useCallback(async (): Promise<boolean> => {
+    setStartupState('checking');
+
+    const result: UpdateCheckResult = await checkForUpdates();
+
+    if (!result.online) {
+      setStartupState('offline');
+      return false;
+    }
+
+    const info = result.update_info;
+    setUpdateInfo(info);
+
+    if (info?.is_force_update) {
+      setStartupState('update');
+      return false;
+    }
+
+    setStartupState('ready');
+    return true;
+  }, []);
+
+  useEffect(() => {
+    runChecks();
+  }, [runChecks]);
+
+  // Callback for the NoInternetModal "Try Again" button
+  const handleRetry = useCallback(async (): Promise<boolean> => {
+    return runChecks();
+  }, [runChecks]);
+
+  // ── Startup screens ────────────────────────────────────────────────────
+  if (startupState === 'checking') {
+    return (
+      <div className="fixed inset-0 bg-[#0A0A0A] flex flex-col items-center justify-center gap-4">
+        <img
+          src="/assets/logo.png"
+          alt="TubeMerger"
+          className="w-12 h-12 rounded-full object-cover opacity-70"
+          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+        />
+        <Spinner size="sm" variant="red" />
+        <p className="text-[13px] text-[#444444]">Starting TubeMerger…</p>
+      </div>
+    );
+  }
+
+  if (startupState === 'offline') {
+    return <NoInternetModal onRetry={handleRetry} />;
+  }
+
+  if (startupState === 'update' && updateInfo) {
+    return <ForceUpdateModal updateInfo={updateInfo} />;
+  }
+
+  // ── Main workspace ─────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-theme-base text-content-primary font-sans">
       <Header
@@ -22,10 +96,16 @@ export function App() {
         loading={app.fetching}
       />
 
+      {/* Optional update banner for minor/patch updates */}
+      {updateInfo?.update_available && !updateInfo.is_force_update && (
+        <UpdateBanner updateInfo={updateInfo} />
+      )}
+
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           activeTab={app.activeTab}
           onTabChange={app.setActiveTab}
+          updateInfo={updateInfo}
         />
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6 pb-32">

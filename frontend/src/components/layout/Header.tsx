@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Github } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
-const GITHUB_URL = 'https://github.com/hashamtanveer-41/tubemerge';
+const GITHUB_URL = 'https://github.com/hashamtanveer-41/tubemerger';
 
 interface HeaderProps {
   onSearch: (url: string) => void;
@@ -25,13 +25,13 @@ export function Header({ onSearch, loading }: HeaderProps) {
       <div className="flex items-center space-x-3 w-64 shrink-0">
         <img
           src="/assets/logo.png"
-          alt="TubeMerge"
+          alt="TubeMerger"
           className="w-9 h-9 rounded-full object-cover border border-stroke-light shrink-0"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
         />
         <div>
           <h1 className="text-lg font-black tracking-tight leading-none text-content-primary">
-            <span className="text-brand-red">T</span>ubeMerge
+            <span className="text-brand-red">T</span>ubeMerger
           </h1>
           <p className="text-[9px] uppercase tracking-widest text-content-secondary mt-0.5 font-medium">
             Free & Open Source

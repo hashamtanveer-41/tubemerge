@@ -25,7 +25,10 @@ import platform
 import random
 import threading
 import time
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 from tubemerge.core.config import (
     TELEMETRY_APP_KEY,
@@ -86,6 +89,8 @@ class TelemetryService:
     @staticmethod
     def _send_sync(payload: dict) -> None:
         """Synchronous HTTP POST to Aptabase, run in background thread."""
+        if httpx is None:
+            return
         try:
             with httpx.Client(timeout=4.0) as client:
                 res = client.post(_APTABASE_ENDPOINT, headers=_HEADERS, json=payload)

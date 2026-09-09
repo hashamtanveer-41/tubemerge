@@ -1,13 +1,15 @@
 import React from 'react';
-import { LayoutGrid, ListVideo, Clock, Download, Music } from 'lucide-react';
+import { LayoutGrid, ListVideo, Clock, Download, Music, ArrowUpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UpdateInfo } from '@/types';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  updateInfo?: UpdateInfo | null;
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, updateInfo }: SidebarProps) {
   const navItems = [
     { id: 'merge',   label: 'Merge Playlists', icon: LayoutGrid },
     { id: 'queues',  label: 'Merge Queues',    icon: ListVideo  },
@@ -49,6 +51,22 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         <div className="flex items-center space-x-2.5 text-xs text-[#555555] py-1.5 px-1">
           <Music className="w-3.5 h-3.5 text-[#444444]" />
           <span>Audio Ripper</span>
+        </div>
+
+        {/* Version indicator */}
+        <div className="pt-2 flex items-center justify-between">
+          <span className="text-[10px] text-[#333333] font-mono">
+            v{updateInfo?.current_version ?? '1.0.5'}
+          </span>
+          {updateInfo?.update_available && !updateInfo.is_force_update && (
+            <span
+              className="flex items-center gap-1 text-[10px] text-[#FF3B30]"
+              title={`v${updateInfo.latest_version} available`}
+            >
+              <ArrowUpCircle className="w-3 h-3" />
+              Update
+            </span>
+          )}
         </div>
       </div>
     </aside>

@@ -1,0 +1,10 @@
+{
+  "version": "1.0.6",
+  "updated": "2026-09-09",
+  "assets": {
+    "windows": "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Setup.exe",
+    "macos": "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-macOS-x64.zip",
+    "linux": "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Linux-x64.tar.gz"
+  },
+  "release_url": "https://github.com/hashamtanveer-41/tubemerger/releases/latest"
+}

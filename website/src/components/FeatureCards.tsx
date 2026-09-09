@@ -58,12 +58,12 @@ export default function FeatureCards() {
       className="mx-auto max-w-[1200px] space-y-10 px-6 py-24 sm:px-10"
     >
       <FeatureCard
-        title="Tired of Merging Clips One by One?"
-        subtitle="Drop in a playlist. Get back one clean video."
+        title="Stitched or Separate Downloads"
+        subtitle="Choose how you want your output — one master file or individual clips."
         bullets={[
-          "No manual stitching",
-          "Auto-aligned — no jumpy cuts",
-          "Even audio throughout",
+          "Merge entire playlist into one seamless master video with auto-generated chapters",
+          "Or save each selected video as a separate file in its own dedicated folder",
+          "Auto-normalized resolution and audio levels — no jumpy cuts or black bars",
         ]}
         visual={
           <img
@@ -80,17 +80,17 @@ export default function FeatureCards() {
 
       <FeatureCard
         reverse
-        title="Can't Skip to the Part You Want?"
-        subtitle="Every video gets clickable chapters, built in."
+        title="Granular Playlist Control"
+        subtitle="Pick exactly which videos to include — skip the rest."
         bullets={[
-          "Jump to any section instantly",
-          "Works in any player",
-          "No extra files",
+          "Toggle any individual video on or off before a single byte downloads",
+          "Skip intros, ads, or irrelevant episodes with one click",
+          "Clickable chapter per video embedded directly in the final MP4 container",
         ]}
         visual={
           <img
             src={chaptersTimeline}
-            alt="Chapter timeline scrubber from the TubeMerge app"
+            alt="Chapter timeline scrubber from the TubeMerger app"
             loading="lazy"
             decoding="async"
             width="1024"
@@ -101,17 +101,17 @@ export default function FeatureCards() {
       />
 
       <FeatureCard
-        title="Worried About Uploading Your Videos?"
-        subtitle="Everything runs on your computer. Nothing leaves it."
+        title="Multi-Quality Selection"
+        subtitle="Download at the resolution you need — from 360p all the way to 4K."
         bullets={[
-          "No uploads, no waiting",
-          "No account needed",
-          "Works fully offline",
+          "Choose 360p, 480p, 720p HD, 1080p Full HD, or 4K Ultra HD before download starts",
+          "100% offline — no uploads, no cloud servers, no account required",
+          "Complete privacy: yt-dlp and FFmpeg run entirely on your local machine",
         ]}
         visual={
           <img
             src={walStats}
-            alt="TubeMerge merge history with stat blocks and completed job"
+            alt="TubeMerger merge history with stat blocks and completed job"
             loading="lazy"
             decoding="async"
             width="1356"
@@ -123,17 +123,17 @@ export default function FeatureCards() {
 
       <FeatureCard
         reverse
-        title="Never Sure If It's Actually Working?"
-        subtitle="Watch every merge happen in real time."
+        title="Real-Time Metrics Dashboard"
+        subtitle="Watch every merge happen live — speed, size, and progress in one place."
         bullets={[
-          "Live progress, no guessing",
-          "Fast download and merge speeds",
-          "Direct on your machine — no waiting in line",
+          "Live download speed updated in real time via SSE — no guessing",
+          "Total playlist duration calculated from metadata before download begins",
+          "Estimated output file size shown upfront so you know what you're getting",
         ]}
         visual={
           <img
             src={mergeProgressImg}
-            alt="TubeMerge real-time merge in progress queue screen"
+            alt="TubeMerger real-time merge in progress queue screen"
             loading="lazy"
             decoding="async"
             width="1064"

@@ -82,7 +82,7 @@ export function AuthModal({
             <Lock className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-xl font-bold text-white">
-            {mode === 'login' ? 'Sign In to TubeMerge' : 'Create Creator Account'}
+            {mode === 'login' ? 'Sign In to TubeMerger' : 'Create Creator Account'}
           </h2>
           <p className="text-xs text-[#888888]">
             {mode === 'login'

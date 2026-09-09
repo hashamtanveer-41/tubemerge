@@ -151,7 +151,7 @@ export default function PricingSection({
           100% Free. No Paywalls. No Subscriptions.
         </h2>
         <p className="mt-3 mx-auto max-w-[620px] text-[15px] text-white/50">
-          TubeMerge is built for creators. All features are unlocked and execute
+          TubeMerger is built for creators. All features are unlocked and execute
           completely on your own machine.
         </p>
       </div>

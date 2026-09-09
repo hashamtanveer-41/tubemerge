@@ -1,11 +1,11 @@
-# TubeMerge: Production Engineering Challenges & Case Studies
+# TubeMerger: Production Engineering Challenges & Case Studies
 
-This document provides a technical deep-dive into the real-world production engineering challenges encountered while designing and implementing **TubeMerge** (YouTube Playlist Merger desktop application). It is formatted for software engineering technical interviews and architectural reviews.
+This document provides a technical deep-dive into the real-world production engineering challenges encountered while designing and implementing **TubeMerger** (YouTube Playlist Merger desktop application). It is formatted for software engineering technical interviews and architectural reviews.
 
 ---
 
 ## Architecture Overview
-TubeMerge uses a **Decoupled Local Sidecar Architecture**:
+TubeMerger uses a **Decoupled Local Sidecar Architecture**:
 - **Backend**: Python 3.14 with a **Django-style Modular "Apps" Architecture** (`apps/binaries`, `apps/playlists`, `apps/merger`, `apps/system`) running on a high-performance ASGI server (FastAPI / Uvicorn).
 - **Frontend**: **React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui** compiled to static assets and rendered in a native desktop window via **PyWebView**.
 - **Media Engine**: Asynchronous pipeline orchestrating static **yt-dlp** and **FFmpeg** processes with Server-Sent Events (SSE) real-time state broadcasts.
@@ -189,12 +189,12 @@ In `app.py`:
 ```python
 try:
     if sys.stdin and sys.stdin.isatty():
-        input("   [Press Enter or Ctrl+C to stop TubeMerge]\n")
+        input("   [Press Enter or Ctrl+C to stop TubeMerger]\n")
     else:
         while True:
             time.sleep(1)
 except (KeyboardInterrupt, EOFError):
-    logger.info("Shutting down TubeMerge.")
+    logger.info("Shutting down TubeMerger.")
 ```
 
 ### Why This Solution Works

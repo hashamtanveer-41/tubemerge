@@ -1,4 +1,4 @@
-"""Unit and integration tests for TubeMerge Django-style modular backend services."""
+"""Unit and integration tests for TubeMerger Django-style modular backend services."""
 
 import unittest
 from pathlib import Path

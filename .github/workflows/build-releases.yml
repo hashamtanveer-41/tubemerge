@@ -139,6 +139,28 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Generate version.json manifest
+        run: |
+          TAG="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.5' }}"
+          VERSION="${TAG#v}"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          BASE="https://github.com/hashamtanveer-41/tubemerger/releases/latest/download"
+          cat > artifacts/version.json <<EOF
+          {
+            "version": "${VERSION}",
+            "tag": "${TAG}",
+            "updated": "${DATE}",
+            "assets": {
+              "windows": "${BASE}/TubeMerge-Setup.exe",
+              "macos": "${BASE}/TubeMerge-macOS-x64.zip",
+              "linux": "${BASE}/TubeMerge-Linux-x64.tar.gz"
+            },
+            "release_url": "https://github.com/hashamtanveer-41/tubemerger/releases/tag/${TAG}"
+          }
+          EOF
+          echo "Generated version.json for ${TAG}:"
+          cat artifacts/version.json
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -147,6 +169,7 @@ jobs:
             artifacts/*.zip
             artifacts/*.tar.gz
             artifacts/*.exe
+            artifacts/version.json
           draft: false
           prerelease: false
           generate_release_notes: true

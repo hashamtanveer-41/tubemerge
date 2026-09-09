@@ -83,6 +83,19 @@ export default function Footer() {
           Made for people who hate re-uploading.
         </span>
       </div>
+
+      {/* SEO content island — visible to search crawlers and screen readers, not to sighted users */}
+      <p className="sr-only">
+        TubeMerger is a free, open-source desktop application for Windows, macOS, and Linux
+        that lets you download YouTube playlists offline and merge them into a single seamless
+        video. Key features include Granular Playlist Control to skip or exclude specific videos
+        before downloading, a choice between Stitched mode (one master video with auto-generated
+        chapter bookmarks) or Separate Downloads mode (each clip saved individually),
+        Multi-Quality Selection from 360p to 4K Ultra HD, and a Real-Time Metrics Dashboard
+        showing live download speed, total playlist duration, and estimated output file size.
+        Powered by yt-dlp and FFmpeg running entirely on your local machine — no ads, no accounts,
+        no subscriptions, and no cloud uploads. 100% free and open source under the MIT license.
+      </p>
     </footer>
   )
 }

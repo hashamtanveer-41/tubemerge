@@ -115,7 +115,7 @@ export default function ComparisonTable() {
                     </span>
                   </td>
 
-                  {/* TubeMerge Col */}
+                  {/* TubeMerger Col */}
                   <td className="p-5 bg-coral/[0.04] border-x border-coral/20 font-semibold text-coral">
                     <div className="flex items-center gap-2">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-coral text-white text-[11px] font-bold">

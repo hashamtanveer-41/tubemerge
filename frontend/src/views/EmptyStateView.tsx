@@ -1,7 +1,7 @@
 import React from 'react';
 import { Files, Maximize2, BookmarkCheck, HardDrive, Volume2, Github, Check } from 'lucide-react';
 
-const GITHUB_URL = 'https://github.com/hashamtanveer-41/tubemerge';
+const GITHUB_URL = 'https://github.com/hashamtanveer-41/tubemerger';
 
 export function EmptyStateView() {
   const features = [

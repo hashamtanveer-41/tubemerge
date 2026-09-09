@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import { useLatestRelease } from "@/hooks/useLatestRelease"
 
 function YouTubeIcon({ className = "" }: { className?: string }) {
   return (
@@ -140,6 +141,7 @@ export default function DownloadPage({
     useState<DownloadedState | null>(null)
   const [redirectSeconds, setRedirectSeconds] = useState<number>(5)
   const [isRedirectPaused, setIsRedirectPaused] = useState<boolean>(false)
+  const { release, loading: releaseLoading } = useLatestRelease()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -171,30 +173,31 @@ export default function DownloadPage({
     onNavigateHome,
   ])
 
+  // Build platform data from live release (or static fallback)
   const platforms = {
     win: {
-      name: "Windows",
-      heading: "Download for Windows",
-      versionInfo: "v1.0.5 • Windows 10 / 11 • 64-bit",
+      name: release.platforms.win.name,
+      heading: release.platforms.win.heading,
+      versionInfo: release.platforms.win.versionInfo,
       icon: <WindowsIcon className="h-6 w-6 text-[#00adef]" />,
-      file: "TubeMerge-Setup.exe",
-      url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Setup.exe",
+      file: release.platforms.win.file,
+      url: release.platforms.win.url,
     },
     mac: {
-      name: "macOS",
-      heading: "Download for macOS",
-      versionInfo: "Apple Silicon & Intel • 52.1 MB",
+      name: release.platforms.mac.name,
+      heading: release.platforms.mac.heading,
+      versionInfo: release.platforms.mac.versionInfo,
       icon: <AppleIcon className="h-6 w-6 text-white" />,
-      file: "TubeMerge-macOS-x64.zip",
-      url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-macOS-x64.zip",
+      file: release.platforms.mac.file,
+      url: release.platforms.mac.url,
     },
     linux: {
-      name: "Linux",
-      heading: "Download for Linux",
-      versionInfo: "Ubuntu / Debian / Fedora • 38.6 MB",
+      name: release.platforms.linux.name,
+      heading: release.platforms.linux.heading,
+      versionInfo: release.platforms.linux.versionInfo,
       icon: <UbuntuIcon className="h-6 w-6 text-[#E95420]" />,
-      file: "TubeMerge-Linux-x64.tar.gz",
-      url: "https://github.com/hashamtanveer-41/tubemerger/releases/latest/download/TubeMerge-Linux-x64.tar.gz",
+      file: release.platforms.linux.file,
+      url: release.platforms.linux.url,
     },
   }
 
@@ -236,11 +239,11 @@ export default function DownloadPage({
           <button
             onClick={onNavigateHome}
             className="flex items-center gap-2.5 cursor-pointer text-left focus:outline-none"
-            aria-label="TubeMerge Home"
+            aria-label="TubeMerger Home"
           >
             <YouTubeIcon className="h-6 w-auto text-coral" />
             <span className="text-[20px] font-bold tracking-tight text-white">
-              TubeMerge
+              TubeMerger
             </span>
           </button>
 
@@ -363,14 +366,30 @@ export default function DownloadPage({
              MINIMAL 3 DOWNLOAD BUTTONS (Consistent Red Outline, No Arrow Icon)
              ─────────────────────────────────────────────────────────────────────── */
           <div className="mx-auto max-w-[960px] w-full space-y-10">
-            {/* Simple Minimal Title */}
-            <div className="text-center max-w-[600px] mx-auto space-y-2">
+            {/* Title + live version badge */}
+            <div className="text-center max-w-[600px] mx-auto space-y-3">
               <h1 className="text-[32px] sm:text-[40px] font-bold text-white tracking-tight leading-tight">
                 Download TubeMerger
               </h1>
               <p className="text-[15px] sm:text-[16px] text-white/60">
-                100% Free & open-source desktop app for all operating systems.
+                100% Free &amp; open-source desktop app for all operating systems.
               </p>
+              {/* Live release badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[12px] text-white/40">
+                {releaseLoading ? (
+                  <span>Checking for latest release…</span>
+                ) : (
+                  <>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                    <span>
+                      Latest: <strong className="text-white/70">v{release.version}</strong>
+                      {release.publishedAt && (
+                        <> &mdash; {new Date(release.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</>
+                      )}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* 3 Minimal Buttons in a Clean Grid */}

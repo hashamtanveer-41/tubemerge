@@ -13,6 +13,7 @@ import {
   AdminUser,
   AdminLicense,
   AdminUsageEvent,
+  UpdateInfo,
 } from '../types';
 
 function getCookie(name: string): string | null {
@@ -92,14 +93,15 @@ export class ApiClient {
   private baseUrl = '';
 
   getToken(): string | null {
-    return safeStorage.getItem('tubemerge_auth_token');
+    return safeStorage.getItem('tubemerger_auth_token') || safeStorage.getItem('tubemerge_auth_token');
   }
 
   setToken(token: string): void {
-    safeStorage.setItem('tubemerge_auth_token', token);
+    safeStorage.setItem('tubemerger_auth_token', token);
   }
 
   clearToken(): void {
+    safeStorage.removeItem('tubemerger_auth_token');
     safeStorage.removeItem('tubemerge_auth_token');
   }
 
@@ -485,3 +487,40 @@ export class ApiClient {
 }
 
 export const api = new ApiClient();
+
+// ---------------------------------------------------------------------------
+// Update / Connectivity helpers (module-level, no auth required)
+// ---------------------------------------------------------------------------
+export async function checkConnectivity(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/updates/connectivity');
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.online === true;
+  } catch {
+    return false;
+  }
+}
+
+export interface UpdateCheckResult {
+  online: boolean;
+  update_info: UpdateInfo | null;
+}
+
+export async function checkForUpdates(): Promise<UpdateCheckResult> {
+  try {
+    const res = await fetch('/api/updates/check');
+    if (!res.ok) return { online: false, update_info: null };
+    return res.json();
+  } catch {
+    return { online: false, update_info: null };
+  }
+}
+
+export async function quitApp(): Promise<void> {
+  try {
+    await fetch('/api/system/quit', { method: 'POST' });
+  } catch {
+    // Process will exit anyway
+  }
+}

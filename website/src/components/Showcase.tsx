@@ -125,27 +125,27 @@ export default function Showcase() {
             <ShowcaseRow
               icon="link"
               title="Paste & analyze"
-              desc="Drop a playlist URL and it reads every video in seconds."
+              desc="Drop any YouTube playlist URL — it reads every video, duration, and thumbnail in seconds."
             />
             <ShowcaseRow
               icon="layers"
               title="Merge queue you can see"
-              desc="Line up jobs, reorder, and watch them finish live."
+              desc="Line up merge jobs, reorder, and watch real-time download speed and progress live."
             />
             <ShowcaseRow
               icon="chip"
-              title="No more one-by-one downloading"
-              desc="Download complete playlists into one stitched file instead of saving dozens of separate videos."
+              title="Stitched or separate — your choice"
+              desc="Get one seamless master video with chapters, or download each clip as its own separate file."
             />
             <ShowcaseRow
               icon="bookmark"
               title="Chapters, automatically"
-              desc="Every source becomes a clickable chapter in the final file."
+              desc="Every source video becomes a clickable, named chapter embedded in the final MP4 file."
             />
             <ShowcaseRow
               icon="shield"
-              title="Built-in extras"
-              desc="Batch downloader and audio ripper, right in the sidebar."
+              title="Skip videos & pick your quality"
+              desc="Exclude specific clips before downloading, choose quality from 360p to 4K, and track estimated file size."
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function Showcase() {
           <div className="pop-hold">
             <img
               src={appMockup}
-              alt="TubeMerge running on a laptop, showing the merge dashboard"
+              alt="TubeMerger running on a laptop, showing the merge dashboard"
               loading="lazy"
               decoding="async"
               width="1309"

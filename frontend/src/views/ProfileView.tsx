@@ -115,7 +115,7 @@ export function ProfileView({
     }
   };
 
-  const isAdmin = profile?.role === 'admin' || profile?.email === 'admin@tubemerge.com';
+  const isAdmin = profile?.role === 'admin' || profile?.email === 'admin@tubemerger.com';
   const isPro =
     (license.status === 'active' &&
       (license.plan_tier === 'PRO' ||
@@ -193,7 +193,7 @@ export function ProfileView({
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-[#888888]">
-                  <span>{profile ? profile.handle : '@guest.tubemerge'}</span>
+                  <span>{profile ? profile.handle : '@guest.tubemerger'}</span>
                   <span className="text-[#555555]">·</span>
                   <span>{profile ? profile.email : 'Unregistered Workstation'}</span>
                   <span className="text-[#555555]">·</span>

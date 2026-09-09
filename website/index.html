@@ -9,9 +9,9 @@
 
   <!-- Primary SEO Metadata -->
   <meta name="description"
-    content="Download YouTube playlists and videos with TubeMerger. Merge full video playlists into seamless, high-quality masters with automatic chapter bookmarks and audio leveling. 100% free, open-source, and offline for all operating systems." />
+    content="TubeMerger is a free, open-source desktop application to download YouTube playlists offline and merge them into a single video. Skip specific videos, choose quality from 360p to 4K, track live download speed, and save as one stitched master or separate files. 100% offline, no ads, no accounts — MIT licensed for Windows, macOS, and Linux." />
   <meta name="keywords"
-    content="video playlist merger, download youtube playlist, merge youtube playlist, youtube video downloader, playlist downloader, stitch videos offline, video chapter generator, local video merger, Apple Silicon video merger, batch video downloader, youtube playlist combiner, free video merger, offline playlist downloader" />
+    content="video playlist merger, download youtube playlist, merge youtube playlist into single video, youtube video downloader, playlist downloader, stitch videos offline, skip videos in playlist, granular playlist control, separate video download, stitched video download, multi quality youtube downloader, download speed tracker, real-time file size estimator, playlist duration tracker, video chapter generator, local video merger, ad-free video downloader, open-source desktop application, free playlist downloader, offline playlist downloader, youtube playlist combiner, batch video downloader" />
   <meta name="author" content="TubeMerger" />
   <meta name="application-name" content="TubeMerger" />
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
@@ -35,7 +35,7 @@
   <meta property="og:title"
     content="TubeMerger — Turn Video Playlists into Seamless Masters | Free Video & Playlist Downloader" />
   <meta property="og:description"
-    content="Download YouTube playlists and videos offline. Merge full video playlists into one single master video with automated chapters, audio leveling, and 100% privacy for all operating systems." />
+    content="Download YouTube playlists offline and merge into one seamless video or save as separate files. Skip specific videos, pick quality (360p–4K), track live download speed, and get auto-generated chapters. 100% free, open-source, and local — no accounts, no ads." />
   <meta property="og:image" content="https://tubemerger.com/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -48,7 +48,7 @@
   <meta name="twitter:title"
     content="TubeMerger — Turn Video Playlists into Seamless Masters | Free Video & Playlist Downloader" />
   <meta name="twitter:description"
-    content="Download YouTube playlists and videos offline. Merge full video playlists into one single master video with automated chapters, audio leveling, and 100% privacy for all operating systems." />
+    content="Download YouTube playlists offline and merge into one seamless video or save as separate files. Skip specific videos, pick quality (360p–4K), track live download speed, and get auto-generated chapters. 100% free, open-source, and local — no accounts, no ads." />
   <meta name="twitter:image" content="https://tubemerger.com/og-image.png" />
   <meta name="twitter:image:alt" content="TubeMerger Desktop App Preview" />
 
@@ -64,7 +64,7 @@
           "operatingSystem": "All Operating Systems (macOS, Windows, Linux)",
           "applicationCategory": "MultimediaApplication",
           "applicationSubCategory": "Video Editing & Batch Processing",
-          "softwareVersion": "2.4.1",
+          "softwareVersion": "1.0.5",
           "description": "Download and merge YouTube playlists into high-quality, seamless masters with automated chapters, audio leveling, and fast local processing. 100% free, open source, and offline for all operating systems.",
           "offers": {
             "@type": "Offer",
@@ -72,17 +72,21 @@
             "price": "0",
             "priceCurrency": "USD",
             "availability": "https://schema.org/InStock",
-            "url": "https://github.com/hashamtanveer-41/tubemerge"
+            "url": "https://github.com/hashamtanveer-41/tubemerger"
           },
           "featureList": [
+            "Stitched or Separate Video Downloads",
+            "Granular Playlist Control — Skip Specific Videos Before Downloading",
+            "Multi-Quality Download: 360p, 480p, 720p, 1080p, and 4K Ultra HD",
+            "Real-Time Metrics Dashboard: Live Download Speed, Playlist Duration & File Size",
             "1-Click YouTube Playlist Analysis & Downloading",
-            "Automated Video Chapter Bookmarks",
-            "Seamless Full HD & 4K Video Joining",
-            "Apple Silicon Video Merger & Multi-OS Engine",
-            "100% Free & Open Source (MIT License)",
+            "Automated Video Chapter Bookmarks Embedded in MP4",
+            "Seamless Full HD & 4K Video Stitching with No Black Bars",
+            "Smart Audio Leveling & Format Normalization Across All Clips",
+            "Apple Silicon, Intel, Windows & Linux Universal Support",
+            "100% Free & Open Source (MIT License) — No Ads, No Accounts",
             "Local SQLite WAL Engine with Zero Cloud Data Uploads",
-            "Smart Audio Leveling & Format Normalization",
-            "Integrated Batch Downloader and High-Fidelity Audio Ripper"
+            "Automatic FFmpeg & yt-dlp Binary Management"
           ],
           "downloadUrl": "https://tubemerger.com/#download",
           "screenshot": "https://tubemerger.com/og-image.png"
@@ -94,13 +98,13 @@
           "url": "https://tubemerger.com/",
           "logo": "https://tubemerger.com/favicon.svg",
           "sameAs": [
-            "https://github.com/hashamtanveer-41/tubemerge",
+            "https://github.com/hashamtanveer-41/tubemerger",
             "https://twitter.com/tubemerger"
           ],
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "url": "https://github.com/hashamtanveer-41/tubemerge/issues"
+            "url": "https://github.com/hashamtanveer-41/tubemerger/issues"
           }
         },
         {
@@ -146,7 +150,23 @@
               "name": "What operating systems are supported?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "TubeMerger is built to run reliably on all major operating systems, including macOS (Universal Apple Silicon & Intel), Windows, and Linux."
+                "text": "TubeMerger is built to run reliably on all major operating systems, including macOS (Universal Apple Silicon & Intel), Windows 10/11, and modern 64-bit Linux distributions."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I skip specific videos in a playlist before downloading?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. TubeMerger's Granular Playlist Control lets you individually select or deselect any video in the playlist before the merge starts. Only the clips you choose are downloaded and processed — perfect for skipping intros, ads, or irrelevant episodes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I download playlist videos as separate files instead of one merged video?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Absolutely. TubeMerger supports both Stitched mode (all selected clips merged into one seamless master video with chapter bookmarks) and Separate Downloads mode (each chosen video saved as its own individual file in a dedicated folder), giving you complete flexibility over your output."
               }
             }
           ]

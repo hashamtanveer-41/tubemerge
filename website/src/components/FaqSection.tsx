@@ -10,20 +10,32 @@ export default function FaqSection() {
 
   const faqs: FaqItem[] = [
     {
-      q: "How does TubeMerge download and merge playlists offline?",
-      a: "TubeMerge runs entirely on your local computer. When you paste a YouTube playlist or video link, it downloads the streams directly to your machine and stitches them together into one unified file. Your media, links, and browsing data are never uploaded to any cloud server.",
+      q: "How does TubeMerger download and merge playlists offline?",
+      a: "TubeMerger runs entirely on your local computer. When you paste a YouTube playlist or video link, it downloads the streams directly to your machine and stitches them together into one unified file. Your media, links, and browsing data are never uploaded to any cloud server.",
     },
     {
-      q: "Does TubeMerge automatically generate video chapters?",
+      q: "Does TubeMerger automatically generate video chapters?",
       a: "Yes. Every individual video from the playlist is converted into a native, clickable chapter marker inside the final MP4 file. You can jump between clips seamlessly in VLC, QuickTime, YouTube, and any standard media player.",
     },
     {
-      q: "Is TubeMerge completely free and open source?",
-      a: "Yes! TubeMerge is 100% free under the permissive MIT license. There are no subscriptions, no locked features, no device caps, and no license keys. All source code is publicly accessible on GitHub.",
+      q: "Is TubeMerger completely free and open source?",
+      a: "Yes! TubeMerger is 100% free under the permissive MIT license. There are no subscriptions, no locked features, no device caps, and no license keys. All source code is publicly accessible on GitHub.",
+    },
+    {
+      q: "Can I skip specific videos in a playlist before downloading?",
+      a: "Yes — this is one of TubeMerger's core capabilities. The Granular Playlist Control interface shows you every video's title, thumbnail, and duration before any download starts. You can toggle individual clips on or off with a single click, skipping intros, ads, or irrelevant episodes so only the videos you actually want are downloaded and merged.",
+    },
+    {
+      q: "Can I download each video as a separate file instead of one merged video?",
+      a: "Absolutely. TubeMerger supports two output modes. Stitched mode concatenates all selected videos into one seamless master MP4 with auto-generated chapter bookmarks at each clip boundary. Separate Downloads mode saves each chosen video as its own individual file in a dedicated folder — no merging, no extra steps. You choose before hitting Start.",
+    },
+    {
+      q: "What video quality options can I select for downloading?",
+      a: "TubeMerger's Multi-Quality Selection lets you pick your target resolution before the download begins: 360p, 480p, 720p HD, 1080p Full HD, and 4K Ultra HD are all supported. The normalization engine automatically re-encodes every clip to the selected canvas using libx264, eliminating black bars and resolution mismatches between clips.",
     },
     {
       q: "How can I support the project?",
-      a: "Since TubeMerge is completely free, you can support development by starring the repository on GitHub, reporting bugs, suggesting improvements, or sharing the app with other creators.",
+      a: "Since TubeMerger is completely free, you can support development by starring the repository on GitHub, reporting bugs, suggesting improvements, or sharing the app with other creators.",
     },
     {
       q: "What should I do if a playlist fails to download or merge?",
@@ -31,7 +43,7 @@ export default function FaqSection() {
     },
     {
       q: "What operating systems are supported?",
-      a: "TubeMerge is built to run reliably on all major operating systems, including macOS (Universal Apple Silicon & Intel), Windows 10/11, and modern 64-bit Linux distributions.",
+      a: "TubeMerger is built to run reliably on all major operating systems, including macOS (Universal Apple Silicon & Intel), Windows 10/11, and modern 64-bit Linux distributions.",
     },
   ]
 
@@ -48,8 +60,8 @@ export default function FaqSection() {
           Frequently Asked Questions
         </h2>
         <p className="mt-2.5 text-[15px] text-white/45">
-          Common questions about offline playlist downloading, chapters, and
-          player compatibility.
+          Common questions about skipping specific videos, stitched vs separate
+          downloads, quality selection, offline processing, and chapter compatibility.
         </p>
       </div>
 

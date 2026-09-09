@@ -26,6 +26,7 @@ from tubemerge.apps.merger.routes import router as merger_router
 from tubemerge.apps.system.routes import router as system_router
 from tubemerge.apps.history.routes import router as history_router
 from tubemerge.apps.queues.routes import router as queues_router
+from tubemerge.apps.updates.routes import router as updates_router
 
 
 @asynccontextmanager
@@ -71,6 +72,7 @@ def create_app() -> FastAPI:
         return JSONResponse({"status": "ok", "app": settings.APP_NAME})
 
     # Core desktop app routers
+    app.include_router(updates_router)
     app.include_router(binaries_router)
     app.include_router(playlists_router)
     app.include_router(merger_router)
