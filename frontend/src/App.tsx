@@ -36,11 +36,33 @@ export function App() {
   const runChecks = useCallback(async (): Promise<boolean> => {
     setStartupState('checking');
 
-    const result: UpdateCheckResult = await checkForUpdates();
-
-    if (!result.online) {
+    // 1. If the operating system network adapter is offline, report offline immediately
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       setStartupState('offline');
       return false;
+    }
+
+    // 2. Query backend connectivity & update service
+    const result: UpdateCheckResult = await checkForUpdates();
+
+    // 3. If backend probe failed, verify whether browser itself can reach the web
+    if (!result.online) {
+      let browserOnline = false;
+      try {
+        await fetch('https://www.google.com/generate_204', {
+          mode: 'no-cors',
+          cache: 'no-store',
+          signal: AbortSignal.timeout(2500),
+        });
+        browserOnline = true;
+      } catch {
+        // Probe failed, device is truly offline
+      }
+
+      if (!browserOnline) {
+        setStartupState('offline');
+        return false;
+      }
     }
 
     const info = result.update_info;
