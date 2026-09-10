@@ -9,7 +9,7 @@ interface SEOProps {
 }
 
 export default function SEO({
-  title = "TubeMerger — Turn Video Playlists into Seamless Masters | Free Video & Playlist Downloader",
+  title = "Turn YouTube Playlists into One Video | TubeMerger",
   description = "Download YouTube playlists and videos with TubeMerger. Merge full playlists into seamless, high-quality masters with automatic chapter bookmarks and audio leveling. 100% free, open-source, and offline for all operating systems.",
   canonicalUrl = "https://tubemerger.com/",
   ogImage = "https://tubemerger.com/og-image.png",

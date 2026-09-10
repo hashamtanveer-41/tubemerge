@@ -88,9 +88,9 @@ export default function Hero({ onOpenDownload }: HeroProps) {
           className="rise-in font-display text-[48px] font-extrabold leading-[1.0] tracking-[-0.035em] sm:text-[64px] lg:text-[72px]"
           style={{ "--rise-delay": "140ms" } as React.CSSProperties}
         >
-          Turn Video Playlists into
+          Turn YouTube Playlists into
           <br />
-          <span className="text-coral">Seamless Masters.</span>
+          <span className="text-coral">One Video.</span>
         </h1>
 
         {/* Subtitle */}

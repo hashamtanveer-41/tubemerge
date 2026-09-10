@@ -117,7 +117,7 @@ export default function App() {
         <div className="min-h-screen bg-canvas text-white selection:bg-coral/30 selection:text-white flex flex-col">
           {/* Home Page SEO */}
           <SEO
-            title="TubeMerger — Turn Video Playlists into Seamless Masters | Free Video & Playlist Downloader"
+            title="Turn YouTube Playlists into One Video | TubeMerger"
             description="Download YouTube playlists and videos with TubeMerger. Merge full playlists into seamless, high-quality masters with automatic chapter bookmarks and audio leveling. 100% free, open-source, and offline for all operating systems."
             canonicalUrl="https://tubemerger.com/"
           />

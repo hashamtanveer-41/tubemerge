@@ -1,6 +1,6 @@
 # TubeMerger Web — Official Website & Landing Hub
 
-> The official web presence, product showcase, and distribution hub for [TubeMerger](https://tubemerger.com) — Turn Video Playlists into Seamless Masters.
+> The official web presence, product showcase, and distribution hub for [TubeMerger](https://tubemerger.com) — Turn YouTube Playlists into One Video.
 
 [![Live Site](https://img.shields.io/badge/Live-tubemerger.com-coral?style=for-the-badge&logo=google-chrome&logoColor=white)](https://tubemerger.com)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
