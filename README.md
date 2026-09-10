@@ -1,7 +1,7 @@
 # TubeMerger 🎬
 
 > **Free, Open-Source Desktop Application to Download & Merge YouTube Playlists into a Single Video**  
-> *Official Website: [tubemerger.com](https://tubemerger.com) · GitHub: [hashamtanveer-41/tubemerger](https://github.com/hashamtanveer-41/tubemerger)*
+> *Official Website: [tubemerger.com](https://tubemerger.com) · GitHub: [hashamtanveer-41/tubemerger](https://github.com/hashamtanveer-41/tubemerger) · Demo: [YouTube](https://youtu.be/9UKKVZPkXHk)*
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg)](https://fastapi.tiangolo.com/)
@@ -9,12 +9,22 @@
 [![TypeScript](https://img.shields.io/badge/typescript-5.7-3178C6.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/tailwindcss-4.0-38B2AC.svg)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL-003B57.svg)](https://sqlite.org/wal.html)
-[![Version](https://img.shields.io/badge/version-1.0.5-brightgreen.svg)](https://github.com/hashamtanveer-41/tubemerger/releases/latest)
+[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo%20Video-FF0000?logo=youtube&logoColor=white)](https://youtu.be/9UKKVZPkXHk)
+[![Version](https://img.shields.io/badge/version-1.0.9-brightgreen.svg)](https://github.com/hashamtanveer-41/tubemerger/releases/latest)
 
 **TubeMerger** is a 100% free, open-source desktop application for Windows, macOS, and Linux that lets you **download YouTube playlists offline** and **merge a full playlist into a single seamless video** — or save each clip as a separate file. Powered by yt-dlp and FFmpeg running entirely on your local machine, TubeMerger is an ad-free video downloader with no accounts, no subscriptions, no upload limits, and no cloud dependencies. Paste a playlist URL, pick which videos to include, choose your quality, and get a broadcast-quality MP4 with automatic chapter bookmarks in minutes.
 
 What makes TubeMerger different from every other YouTube playlist downloader is its granular per-video control. Unlike bulk download tools that blindly grab everything, TubeMerger shows you every video in the playlist before downloading — letting you skip or exclude specific clips with a single click. You also get real-time metrics while the merge runs: live download speed, total playlist duration, and an estimated output file size, so you always know exactly what is happening on your machine.
+
+---
+
+## 🎥 Demo Video
+
+See TubeMerger in action — pasting a playlist, skipping unwanted clips, choosing resolution, and exporting offline:
+
+[![Watch TubeMerger Demo](https://img.youtube.com/vi/9UKKVZPkXHk/maxresdefault.jpg)](https://youtu.be/9UKKVZPkXHk)
+
+> 📺 **[Watch the full demo walkthrough on YouTube](https://youtu.be/9UKKVZPkXHk)**
 
 ---
 
