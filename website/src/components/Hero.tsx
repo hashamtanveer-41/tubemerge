@@ -88,17 +88,17 @@ export default function Hero({ onOpenDownload }: HeroProps) {
           className="rise-in font-display text-[48px] font-extrabold leading-[1.0] tracking-[-0.035em] sm:text-[64px] lg:text-[72px]"
           style={{ "--rise-delay": "140ms" } as React.CSSProperties}
         >
-          Turn YouTube Playlists into
+          Turn Video Playlists into
           <br />
-          <span className="text-coral">One Video.</span>
+          <span className="text-coral">Seamless Masters.</span>
         </h1>
 
         {/* Subtitle */}
         <p
-          className="rise-in mx-auto mt-[26px] max-w-[680px] text-[16px] sm:text-[18px] leading-relaxed text-white/65"
+          className="rise-in mx-auto mt-[26px] text-[16px] text-white/45"
           style={{ "--rise-delay": "260ms" } as React.CSSProperties}
         >
-          TubeMerger is a free, open-source desktop app that downloads selected playlist videos and stitches them into a single MP4 locally on your machine—no ads, cloud limits, or subscriptions.
+          One link in. One stitched master out.
         </p>
 
         {/* Action Buttons */}
