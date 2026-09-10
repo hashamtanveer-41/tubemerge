@@ -28,7 +28,7 @@ function Logo() {
   )
 }
 
-export default function Footer() {
+export default function Footer({ onNavigatePlaylistGuide }: { onNavigatePlaylistGuide?: () => void }) {
   return (
     <footer
       id="docs"
@@ -59,6 +59,14 @@ export default function Footer() {
           >
             FAQ
           </a>
+          {onNavigatePlaylistGuide && (
+            <button
+              onClick={onNavigatePlaylistGuide}
+              className="font-sans text-[14px] text-white/50 transition-colors hover:text-white cursor-pointer"
+            >
+              Playlist Guide
+            </button>
+          )}
           <a
             href="https://github.com/hashamtanveer-41/tubemerger"
             target="_blank"

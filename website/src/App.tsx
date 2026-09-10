@@ -9,21 +9,21 @@ import PricingSection from "@/components/PricingSection"
 import FaqSection from "@/components/FaqSection"
 import Footer from "@/components/Footer"
 import DownloadPage from "@/pages/DownloadPage"
+import PlaylistToVideoPage from "@/pages/PlaylistToVideoPage"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 
 export default function App() {
   // Handle client-side routing between Home and dedicated Download Page
-  const [currentView, setCurrentView] = useState<"home" | "download">(() => {
+  const [currentView, setCurrentView] = useState<"home" | "download" | "playlist-guide">(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase()
       const hash = window.location.hash.toLowerCase()
-      if (
-        path === "/download" ||
-        hash === "#download" ||
-        hash === "#/download"
-      ) {
+      if (path === "/download" || hash === "#download" || hash === "#/download") {
         return "download"
+      }
+      if (path === "/playlist-to-single-video") {
+        return "playlist-guide"
       }
     }
     return "home"
@@ -34,12 +34,10 @@ export default function App() {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase()
       const hash = window.location.hash.toLowerCase()
-      if (
-        path === "/download" ||
-        hash === "#download" ||
-        hash === "#/download"
-      ) {
+      if (path === "/download" || hash === "#download" || hash === "#/download") {
         setCurrentView("download")
+      } else if (path === "/playlist-to-single-video") {
+        setCurrentView("playlist-guide")
       } else {
         setCurrentView("home")
       }
@@ -62,6 +60,18 @@ export default function App() {
       }
     } catch {
       window.location.hash = "#download"
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const navigateToPlaylistGuide = () => {
+    setCurrentView("playlist-guide")
+    try {
+      if (window.location.pathname !== "/playlist-to-single-video") {
+        window.history.pushState(null, "", "/playlist-to-single-video")
+      }
+    } catch {
+      window.location.hash = "#playlist-to-single-video"
     }
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -113,6 +123,11 @@ export default function App() {
             onNavigateToCommunity={navigateToCommunity}
           />
         </>
+      ) : currentView === "playlist-guide" ? (
+        <PlaylistToVideoPage
+          onNavigateHome={navigateToHome}
+          onNavigateDownload={navigateToDownload}
+        />
       ) : (
         <div className="min-h-screen bg-canvas text-white selection:bg-coral/30 selection:text-white flex flex-col">
           {/* Home Page SEO */}
@@ -141,7 +156,7 @@ export default function App() {
           </main>
 
           {/* Footer */}
-          <Footer />
+          <Footer onNavigatePlaylistGuide={navigateToPlaylistGuide} />
         </div>
       )}
 
