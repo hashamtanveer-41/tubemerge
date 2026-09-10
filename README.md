@@ -175,6 +175,20 @@ TELEMETRY_APP_KEY: str = ""  # Set to empty string to disable telemetry
 
 ---
 
+##  Download Desktop Binaries (No Setup Required)
+
+If you just want to use TubeMerger without setting up Python or Node.js:
+
+| Platform | Download | Format |
+| :--- | :--- | :--- |
+| **Windows** | [Download for Windows](https://github.com/hashamtanveer-41/tubemerger/releases/latest) | `.exe` / Installer |
+| **Linux (Ubuntu/Debian)** | [Download for Linux](https://github.com/hashamtanveer-41/tubemerger/releases/latest) | `.deb` / Executable |
+| **macOS** | [Download for macOS](https://github.com/hashamtanveer-41/tubemerger/releases/latest) | `.dmg` (Universal) |
+
+*Or visit the [official download page](https://tubemerger.com/download) on tubemerger.com.*
+
+---
+
 ## 🛠 Quick Start
 
 ### 1. Prerequisites
