@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react"
 
 /* ─────────────────────────────────────────────
-   Icon components
+   Icon components (clean inline SVGs)
 ───────────────────────────────────────────── */
 function YouTubeIcon({ className = "" }: { className?: string }) {
   return (
@@ -57,7 +57,7 @@ function CrossIcon({ className = "" }: { className?: string }) {
 }
 
 /* ─────────────────────────────────────────────
-   Inline Navbar
+   Navbar (Clean, solid background, no glassmorphism)
 ───────────────────────────────────────────── */
 function MiniNavbar({
   onNavigateHome,
@@ -106,16 +106,16 @@ function MiniNavbar({
 }
 
 /* ─────────────────────────────────────────────
-   Mini Footer
+   Footer (Clean solid layout)
 ───────────────────────────────────────────── */
 function MiniFooter({
   onNavigateHome,
   onNavigateDownload,
-  onNavigateYTDownloader,
+  onNavigatePlaylistGuide,
 }: {
   onNavigateHome: () => void
   onNavigateDownload: () => void
-  onNavigateYTDownloader?: () => void
+  onNavigatePlaylistGuide?: () => void
 }) {
   return (
     <footer
@@ -145,12 +145,12 @@ function MiniFooter({
           >
             Download
           </button>
-          {onNavigateYTDownloader && (
+          {onNavigatePlaylistGuide && (
             <button
-              onClick={onNavigateYTDownloader}
+              onClick={onNavigatePlaylistGuide}
               className="font-sans text-[14px] text-white/50 transition-colors hover:text-white cursor-pointer"
             >
-              Playlist Downloader
+              Merge Playlist Guide
             </button>
           )}
           <a
@@ -173,14 +173,14 @@ function MiniFooter({
       </div>
       <div className="mx-auto mt-10 flex max-w-[1280px] flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/[0.06] pt-6">
         <span className="text-[13px] text-white/35">© 2026 tubemerger.com</span>
-        <span className="text-[13px] text-white/35">Made for people who hate re-uploading.</span>
+        <span className="text-[13px] text-white/35">100% free and open source offline downloader.</span>
       </div>
     </footer>
   )
 }
 
 /* ─────────────────────────────────────────────
-   Sub-components
+   Step Component
 ───────────────────────────────────────────── */
 function StepCard({
   number,
@@ -192,100 +192,110 @@ function StepCard({
   description: string
 }) {
   return (
-    <div className="reveal relative flex gap-5 rounded-[20px] border border-white/[0.08] bg-card p-6 sm:p-8 transition-colors hover:border-white/[0.16]">
+    <div className="reveal flex gap-5 rounded-[18px] border border-white/[0.08] bg-card p-6 sm:p-7 transition-colors hover:border-white/[0.14]">
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-display font-extrabold text-coral"
-        style={{ background: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.25)" }}
+        style={{ background: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.22)" }}
       >
         {number}
       </div>
       <div>
-        <h3 className="font-display text-[17px] font-bold text-white">{title}</h3>
-        <p className="mt-1.5 text-[14.5px] leading-relaxed text-white/50">{description}</p>
+        <h3 className="font-display text-[16.5px] font-bold text-white">{title}</h3>
+        <p className="mt-1.5 text-[14px] leading-relaxed text-white/50">{description}</p>
       </div>
     </div>
   )
 }
 
-function CompRow({
+function ComparisonRow({
   feature,
-  tubemerger,
-  cloudTools,
+  desktopApp,
+  webDownloaders,
 }: {
   feature: string
-  tubemerger: string
-  cloudTools: string
+  desktopApp: string
+  webDownloaders: string
 }) {
   return (
     <div className="grid grid-cols-3 gap-4 border-b border-white/[0.06] py-4 text-[14px]">
-      <span className="text-white/60 font-medium">{feature}</span>
-      <span className="flex items-center gap-2 text-white/85">
+      <span className="text-white/65 font-medium">{feature}</span>
+      <span className="flex items-center gap-2 text-white/90">
         <CheckIcon className="h-5 w-5 shrink-0" />
-        {tubemerger}
+        {desktopApp}
       </span>
       <span className="flex items-center gap-2 text-white/35">
         <CrossIcon className="h-5 w-5 shrink-0" />
-        {cloudTools}
+        {webDownloaders}
       </span>
     </div>
   )
 }
 
 /* ─────────────────────────────────────────────
-   JSON-LD structured data
+   JSON-LD Structured Data
 ───────────────────────────────────────────── */
 const JSONLD = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "HowTo",
-      "@id": "https://tubemerger.com/playlist-to-single-video#howto",
-      name: "How to Turn a YouTube Playlist into One Video",
-      description:
-        "Download and merge a full YouTube playlist into a single MP4 file locally using TubeMerger — free, open-source, and private.",
-      totalTime: "PT2M",
-      tool: {
-        "@type": "SoftwareApplication",
-        name: "TubeMerger",
-        url: "https://tubemerger.com/",
+      "@type": "SoftwareApplication",
+      "@id": "https://tubemerger.com/youtube-playlist-downloader#software",
+      name: "TubeMerger",
+      operatingSystem: "Windows, macOS, Linux",
+      applicationCategory: "MultimediaApplication",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
       },
+      description:
+        "Free and open-source desktop YouTube playlist downloader. Download entire playlists into separate files or merged MP4s offline with granular clip selection and quality control.",
+      url: "https://tubemerger.com/youtube-playlist-downloader",
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://tubemerger.com/youtube-playlist-downloader#howto",
+      name: "How to Download a YouTube Playlist Offline with TubeMerger",
+      description:
+        "Download full YouTube playlists to your computer into separate video files with custom quality and clip selection.",
+      totalTime: "PT2M",
       step: [
         {
           "@type": "HowToStep",
           position: 1,
-          name: "Paste the Playlist URL",
-          text: "Open TubeMerger and paste any public YouTube playlist link into the URL field.",
+          name: "Paste the Playlist Link",
+          text: "Open TubeMerger and paste any public YouTube playlist URL. The app inspects each video title, thumbnail, and duration.",
         },
         {
           "@type": "HowToStep",
           position: 2,
-          name: "Choose Your Clips",
-          text: "Browse every video's title, thumbnail, and duration. Toggle off anything you don't want.",
+          name: "Select Desired Videos",
+          text: "Review the playlist list and uncheck any videos you want to skip, such as teasers or already watched episodes.",
         },
         {
           "@type": "HowToStep",
           position: 3,
-          name: "Select Output Quality",
-          text: "Pick your target resolution: 360p, 480p, 720p, 1080p, or 4K Ultra HD.",
+          name: "Choose Separate Files Mode & Resolution",
+          text: "Select Separate Files mode to keep each clip independent, and pick your preferred video resolution up to 4K.",
         },
         {
           "@type": "HowToStep",
           position: 4,
-          name: "Export as One MP4",
-          text: "Hit Start. TubeMerger downloads, normalizes, levels audio, embeds chapter markers, and outputs a single master video entirely on your machine.",
+          name: "Download Directly to Disk",
+          text: "Click Start. TubeMerger downloads each video stream directly to your chosen local folder with no cloud relay.",
         },
       ],
     },
     {
       "@type": "BreadcrumbList",
-      "@id": "https://tubemerger.com/playlist-to-single-video#breadcrumb",
+      "@id": "https://tubemerger.com/youtube-playlist-downloader#breadcrumb",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: "https://tubemerger.com/" },
         {
           "@type": "ListItem",
           position: 2,
-          name: "YouTube Playlist to One Video",
-          item: "https://tubemerger.com/playlist-to-single-video",
+          name: "YouTube Playlist Downloader",
+          item: "https://tubemerger.com/youtube-playlist-downloader",
         },
       ],
     },
@@ -293,7 +303,7 @@ const JSONLD = {
 }
 
 /* ─────────────────────────────────────────────
-   Reveal hook
+   Reveal Hook
 ───────────────────────────────────────────── */
 function useReveal() {
   const ref = useRef<HTMLElement>(null)
@@ -318,35 +328,39 @@ function useReveal() {
 }
 
 /* ─────────────────────────────────────────────
-   FAQ accordion
+   FAQ Accordion
 ───────────────────────────────────────────── */
 function FaqList() {
   const [openIdx, setOpenIdx] = React.useState<number | null>(0)
 
   const faqs = [
     {
-      q: "Can TubeMerger download an entire YouTube playlist into one MP4?",
-      a: "Yes. Paste a playlist URL, select the clips you want, choose a quality, and TubeMerger downloads and merges them all into a single MP4 file — with chapter markers at every clip boundary — entirely on your local machine.",
+      q: "Can I download playlist videos as separate files instead of one merged file?",
+      a: "Yes. TubeMerger provides a Separate Downloads toggle. When enabled, each selected video in the playlist is downloaded into its own clean file (numbered in playlist sequence), stored directly in your local destination folder.",
     },
     {
-      q: "Does TubeMerger work without an internet connection during merging?",
-      a: "The merge and encoding stage is fully offline. TubeMerger only needs the internet to download the video streams from YouTube. Once clips are downloaded, FFmpeg stitches them together locally with zero network traffic.",
+      q: "Can I skip specific episodes or videos I don't want?",
+      a: "Yes. When you enter a playlist URL, TubeMerger fetches and displays the complete list of videos with thumbnails, titles, and runtimes. You can individually uncheck any video you do not need, or select and deselect all with one click.",
     },
     {
-      q: "What is the maximum playlist length TubeMerger supports?",
-      a: "There is no artificial limit. Playlist length is only constrained by your available disk space and download time. Cloud tools typically cap at 10–30 minutes; TubeMerger has no such restriction.",
+      q: "Is there any limit on the number of videos or playlist size?",
+      a: "No artificial limits. You can download long series, full course libraries, or music collections. The only constraint is your computer's local disk capacity and internet connection.",
     },
     {
-      q: "Does the final merged MP4 work in VLC, QuickTime, and standard players?",
-      a: "Yes. TubeMerger outputs a standard H.264/AAC MP4 container that plays natively in VLC, QuickTime, Windows Media Player, and any browser-based player. Chapter markers are embedded using the MP4 chapter atom format.",
+      q: "Do I need to install yt-dlp, FFmpeg, or Python manually?",
+      a: "No. TubeMerger packages yt-dlp and FFmpeg binaries internally. There is no terminal configuration, no Python requirement, and no environment variable setup needed.",
     },
     {
-      q: "Can I skip specific videos in the middle of a playlist?",
-      a: "Absolutely. Before any download starts, TubeMerger displays every video's title, thumbnail, and duration. You toggle individual clips on or off — then only the selected videos are downloaded and merged, in order.",
+      q: "What video resolutions and formats can I download?",
+      a: "TubeMerger supports standard resolutions including 360p, 480p, 720p HD, 1080p Full HD, 1440p 2K, and 2160p 4K UHD. Video streams are saved in MP4 or MKV containers with clear audio.",
     },
     {
-      q: "Is TubeMerger safe to use? Does it upload my data anywhere?",
-      a: "TubeMerger is 100% open-source (MIT license) — you can inspect every line of code on GitHub. It is powered by yt-dlp and FFmpeg running locally. No data, links, or files ever leave your device.",
+      q: "Why use a desktop downloader instead of an online web converter?",
+      a: "Web-based downloaders rely on third-party servers that inject redirect ads, throttle transfer speeds, restrict video lengths, and collect browsing telemetry. A desktop app communicates directly between your machine and YouTube with complete privacy.",
+    },
+    {
+      q: "Is TubeMerger free and open source?",
+      a: "Yes. TubeMerger is licensed under the MIT license and is 100% open source. You can inspect the source code, verify privacy claims, or contribute directly on GitHub.",
     },
   ]
 
@@ -358,17 +372,17 @@ function FaqList() {
           <div
             key={i}
             className={`reveal rounded-[18px] border overflow-hidden bg-card transition-colors ${
-              isOpen ? "border-coral/40" : "border-white/[0.08] hover:border-white/20"
+              isOpen ? "border-coral/40" : "border-white/[0.08] hover:border-white/16"
             }`}
           >
             <button
               onClick={() => setOpenIdx(isOpen ? null : i)}
-              className="flex w-full items-center justify-between p-5 text-left font-display text-[16px] font-bold text-white transition-colors cursor-pointer"
+              className="flex w-full items-center justify-between p-5 text-left font-display text-[15.5px] font-bold text-white transition-colors cursor-pointer"
               aria-expanded={isOpen}
             >
               <span>{faq.q}</span>
               <span
-                className={`ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[16px] transition-colors ${
+                className={`ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[15px] transition-colors ${
                   isOpen
                     ? "bg-coral text-white border-coral"
                     : "border-white/10 text-white/40"
@@ -390,23 +404,23 @@ function FaqList() {
 }
 
 /* ─────────────────────────────────────────────
-   Main page component
+   Main Page Component
 ───────────────────────────────────────────── */
-interface PlaylistToVideoPageProps {
+interface YouTubePlaylistDownloaderPageProps {
   onNavigateHome: () => void
   onNavigateDownload: () => void
-  onNavigateYTDownloader?: () => void
+  onNavigatePlaylistGuide?: () => void
 }
 
-export default function PlaylistToVideoPage({
+export default function YouTubePlaylistDownloaderPage({
   onNavigateHome,
   onNavigateDownload,
-  onNavigateYTDownloader,
-}: PlaylistToVideoPageProps) {
+  onNavigatePlaylistGuide,
+}: YouTubePlaylistDownloaderPageProps) {
   const contentRef = useReveal()
 
   useEffect(() => {
-    document.title = "YouTube Playlist to One Video — Free Desktop Tool | TubeMerger"
+    document.title = "YouTube Playlist Downloader for Desktop — Free & Open Source | TubeMerger"
 
     const setMeta = (name: string, content: string, isProperty = false) => {
       const attr = isProperty ? "property" : "name"
@@ -421,19 +435,26 @@ export default function PlaylistToVideoPage({
 
     setMeta(
       "description",
-      "Turn any YouTube playlist into a single MP4 in minutes. TubeMerger downloads, merges, and chapter-marks your selected videos entirely on your machine — free, open-source, no cloud."
+      "Download YouTube playlists offline into separate MP4 or MKV files with TubeMerger. Pick your video quality, skip unwanted episodes, and download locally with zero ads or limits."
     )
-    setMeta("og:title", "YouTube Playlist to One Video — Free Desktop Tool | TubeMerger", true)
     setMeta(
-      "og:description",
-      "Turn any YouTube playlist into a single MP4 in minutes. TubeMerger downloads, merges, and chapter-marks your selected videos entirely on your machine — free, open-source, no cloud.",
+      "og:title",
+      "YouTube Playlist Downloader for Desktop — Free & Open Source | TubeMerger",
       true
     )
-    setMeta("og:url", "https://tubemerger.com/playlist-to-single-video", true)
-    setMeta("twitter:title", "YouTube Playlist to One Video — Free Desktop Tool | TubeMerger")
+    setMeta(
+      "og:description",
+      "Download YouTube playlists offline into separate MP4 or MKV files. Granular video selection, up to 4K quality, open-source and ad-free.",
+      true
+    )
+    setMeta("og:url", "https://tubemerger.com/youtube-playlist-downloader", true)
+    setMeta(
+      "twitter:title",
+      "YouTube Playlist Downloader for Desktop — Free & Open Source | TubeMerger"
+    )
     setMeta(
       "twitter:description",
-      "Turn any YouTube playlist into a single MP4 in minutes. TubeMerger downloads, merges, and chapter-marks your selected videos — free, open-source."
+      "Download YouTube playlists offline into separate MP4 or MKV files with granular clip selection and quality control."
     )
 
     let canonical = document.querySelector<HTMLLinkElement>("link[rel='canonical']")
@@ -442,45 +463,72 @@ export default function PlaylistToVideoPage({
       canonical.rel = "canonical"
       document.head.appendChild(canonical)
     }
-    canonical.href = "https://tubemerger.com/playlist-to-single-video"
+    canonical.href = "https://tubemerger.com/youtube-playlist-downloader"
 
-    if (!document.getElementById("jsonld-playlist-page")) {
+    if (!document.getElementById("jsonld-yt-downloader-page")) {
       const script = document.createElement("script")
       script.type = "application/ld+json"
-      script.id = "jsonld-playlist-page"
+      script.id = "jsonld-yt-downloader-page"
       script.textContent = JSON.stringify(JSONLD)
       document.head.appendChild(script)
     }
 
     return () => {
-      document.getElementById("jsonld-playlist-page")?.remove()
+      document.getElementById("jsonld-yt-downloader-page")?.remove()
     }
   }, [])
 
   const steps = [
     {
       number: "1",
-      title: "Paste the Playlist URL",
+      title: "Paste the Playlist Link",
       description:
-        "Open TubeMerger and drop any public YouTube playlist link into the URL field. The app immediately probes every video's title, thumbnail, and duration.",
+        "Copy any public or unlisted YouTube playlist URL and paste it into TubeMerger. The app immediately parses all videos, titles, and durations.",
     },
     {
       number: "2",
-      title: "Select Your Clips",
+      title: "Pick Your Episodes",
       description:
-        "Toggle individual videos on or off with a single click. Skip intros, ad reads, or irrelevant episodes — only the clips you choose get downloaded.",
+        "Every video is listed with a preview thumbnail and checkbox. Keep only the episodes or clips you need, and uncheck filler or trailers.",
     },
     {
       number: "3",
-      title: "Choose Output Quality",
+      title: "Set Output Mode & Resolution",
       description:
-        "Pick your target resolution: 360p, 480p, 720p HD, 1080p Full HD, or 4K Ultra HD. The engine normalizes every clip to a consistent canvas — no black bars.",
+        "Choose Separate Downloads to keep each video as an independent file, or Stitched mode to merge them. Pick your target resolution from 360p up to 4K.",
     },
     {
       number: "4",
-      title: "Export as One Master MP4",
+      title: "Save Directly to Your Computer",
       description:
-        "Hit Start. TubeMerger downloads, normalizes, levels audio, embeds chapter bookmarks at every clip boundary, and writes a single seamless MP4 — all locally on your machine.",
+        "Select your destination folder and click Download. Videos are fetched and saved directly to your hard drive with live progress metrics.",
+    },
+  ]
+
+  const featurePillars = [
+    {
+      title: "Separate Files or Merged Output",
+      desc: "Save every video as an independent file numbered in order, or merge them into a single master MP4. Switch modes with a single toggle.",
+    },
+    {
+      title: "Granular Video Selection",
+      desc: "Check and uncheck individual videos before downloading starts. Skip intros, watched lectures, or bonus clips without downloading the full set.",
+    },
+    {
+      title: "Resolution Control (Up to 4K)",
+      desc: "Select the quality that suits your storage and display: 360p, 480p, 720p HD, 1080p Full HD, or 4K Ultra HD with synchronized audio.",
+    },
+    {
+      title: "Zero Ads, Zero Trackers",
+      desc: "Unlike web downloaders loaded with deceptive ads and popups, TubeMerger is a clean native desktop application with no advertisements.",
+    },
+    {
+      title: "Direct Local Processing",
+      desc: "Network transfers connect directly from your machine to YouTube. No middleman cloud servers, no link logging, and no file uploads.",
+    },
+    {
+      title: "No Arbitrary File Limits",
+      desc: "Download playlists of any length. There are no 10-minute video duration limits, file size caps, or required user accounts.",
     },
   ]
 
@@ -490,15 +538,15 @@ export default function PlaylistToVideoPage({
 
       <main id="main-content" role="main" className="flex-1" ref={contentRef as React.RefObject<HTMLElement>}>
         {/* ── Hero ─────────────────────────────────── */}
-        <section className="relative overflow-hidden border-b border-white/[0.06] px-6 py-20 sm:px-10 sm:py-28">
+        <section className="relative overflow-hidden border-b border-white/[0.06] px-6 py-20 sm:px-10 sm:py-26">
           <div
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "radial-gradient(ellipse 60% 50% at 50% -10%, rgba(255,59,48,0.12) 0%, transparent 70%)",
+                "radial-gradient(ellipse 60% 45% at 50% -5%, rgba(255,59,48,0.1) 0%, transparent 65%)",
             }}
           />
-          <div className="relative mx-auto max-w-[820px] text-center">
+          <div className="relative mx-auto max-w-[840px] text-center">
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb" className="mb-8 text-[13px] text-white/35">
               <ol className="inline-flex items-center gap-2">
@@ -512,28 +560,27 @@ export default function PlaylistToVideoPage({
                 </li>
                 <li aria-hidden="true" className="text-white/20">/</li>
                 <li className="text-white/55 font-medium" aria-current="page">
-                  YouTube Playlist to One Video
+                  YouTube Playlist Downloader
                 </li>
               </ol>
             </nav>
 
             <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
-              Free Desktop Tool
+              Open Source Desktop App
             </span>
 
-            <h1 className="rise-in mt-4 font-display text-[42px] font-extrabold leading-[1.05] tracking-[-0.03em] text-white sm:text-[58px] lg:text-[64px]">
-              Turn a YouTube Playlist
+            <h1 className="rise-in mt-4 font-display text-[40px] font-extrabold leading-[1.08] tracking-[-0.03em] text-white sm:text-[54px] lg:text-[62px]">
+              YouTube Playlist Downloader
               <br />
-              <span className="text-coral">into One Single Video</span>
+              <span className="text-coral">for Your Desktop</span>
             </h1>
 
             <p
-              className="rise-in mx-auto mt-6 max-w-[640px] text-[16px] leading-relaxed text-white/60 sm:text-[18px]"
+              className="rise-in mx-auto mt-6 max-w-[660px] text-[16px] leading-relaxed text-white/60 sm:text-[18px]"
               style={{ "--rise-delay": "120ms" } as React.CSSProperties}
             >
-              Most tools make you download clips one-by-one and stitch them manually. TubeMerger
-              automates the entire pipeline locally — select your videos, choose quality, and get
-              one chapter-marked MP4. No cloud. No subscription. No limits.
+              Download entire YouTube playlists offline into separate MP4 or MKV files.
+              Select only the clips you want, choose your resolution up to 4K, and save cleanly to your local drive without web ads or video length caps.
             </p>
 
             <div
@@ -542,10 +589,10 @@ export default function PlaylistToVideoPage({
             >
               <button
                 onClick={onNavigateDownload}
-                id="playlist-page-cta-download"
-                className="inline-flex items-center justify-center rounded-full bg-coral h-14 px-9 text-[16px] font-display font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,59,48,0.65)] hover:brightness-110 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/60"
+                id="yt-downloader-cta-download"
+                className="inline-flex items-center justify-center rounded-full bg-coral h-14 px-9 text-[15.5px] font-display font-semibold text-white shadow-[0_8px_24px_-8px_rgba(255,59,48,0.65)] hover:brightness-110 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/60"
               >
-                Download TubeMerger — Free
+                Download for Desktop — Free
               </button>
               <a
                 href="https://github.com/hashamtanveer-41/tubemerger"
@@ -554,7 +601,7 @@ export default function PlaylistToVideoPage({
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] h-14 px-7 text-[15px] font-sans font-medium text-white/75 hover:text-white hover:border-white/30 transition-all duration-200"
               >
                 <GitHubIcon className="h-4 w-4" />
-                View Source
+                View on GitHub
               </a>
             </div>
 
@@ -562,172 +609,177 @@ export default function PlaylistToVideoPage({
               className="rise-in mt-7 font-sans text-[13px] text-white/35"
               style={{ "--rise-delay": "320ms" } as React.CSSProperties}
             >
-              Windows · macOS · Linux &nbsp;•&nbsp; 100% Free &amp; Open Source &nbsp;•&nbsp; Fully Offline
+              Windows · macOS · Linux &nbsp;•&nbsp; 100% Free &amp; Open Source &nbsp;•&nbsp; No Ads or Signups
             </p>
+          </div>
+        </section>
+
+        {/* ── Key Capabilities (Granular focus) ────── */}
+        <section
+          className="mx-auto max-w-[1040px] px-6 py-20 sm:px-10 sm:py-26"
+          aria-labelledby="features-heading"
+        >
+          <div className="mb-12 text-center">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
+              Granular Control
+            </span>
+            <h2
+              id="features-heading"
+              className="reveal mt-3 font-display text-[30px] font-extrabold tracking-[-0.03em] text-white sm:text-[38px]"
+            >
+              Clean Playlist Downloads Without the Fluff
+            </h2>
+            <p className="reveal mt-3 max-w-[600px] mx-auto text-[15px] leading-relaxed text-white/45">
+              Built for people who want offline archives without being forced into all-or-nothing downloads or ad-heavy converter sites.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featurePillars.map((pillar) => (
+              <div
+                key={pillar.title}
+                className="reveal rounded-[18px] border border-white/[0.08] bg-card p-6 transition-colors hover:border-white/[0.16]"
+              >
+                <h3 className="font-display text-[16px] font-bold text-white">{pillar.title}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-white/50">{pillar.desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
         {/* ── How It Works ─────────────────────────── */}
         <section
-          className="mx-auto max-w-[1000px] px-6 py-20 sm:px-10 sm:py-28"
+          className="border-t border-white/[0.06] px-6 py-20 sm:px-10 sm:py-26"
           aria-labelledby="how-it-works-heading"
-        >
-          <div className="mb-12 text-center">
-            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
-              Step-by-Step
-            </span>
-            <h2
-              id="how-it-works-heading"
-              className="reveal mt-3 font-display text-[32px] font-extrabold tracking-[-0.03em] text-white sm:text-[42px]"
-            >
-              How to Merge a YouTube Playlist into One Video
-            </h2>
-            <p className="reveal mt-3 text-[15px] text-white/45">
-              Four steps from URL to finished MP4. Everything runs on your hardware — nothing
-              leaves your machine.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {steps.map((step) => (
-              <StepCard key={step.number} {...step} />
-            ))}
-          </div>
-        </section>
-
-        {/* ── Why Local vs Cloud ───────────────────── */}
-        <section
-          className="border-t border-white/[0.06] px-6 py-20 sm:px-10 sm:py-28"
-          aria-labelledby="why-local-heading"
-        >
-          <div className="mx-auto max-w-[1000px]">
-            <div className="mb-10 text-center">
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
-                TubeMerger vs Cloud Tools
-              </span>
-              <h2
-                id="why-local-heading"
-                className="reveal mt-3 font-display text-[32px] font-extrabold tracking-[-0.03em] text-white sm:text-[42px]"
-              >
-                Why Merge Locally?
-              </h2>
-              <p className="reveal mt-3 max-w-[560px] mx-auto text-[15px] text-white/45">
-                Cloud downloaders cap lengths, require accounts, and upload your watch history.
-                TubeMerger runs entirely on your hardware.
-              </p>
-            </div>
-            <div className="reveal rounded-[20px] border border-white/[0.08] bg-card overflow-hidden">
-              <div className="grid grid-cols-3 gap-4 border-b border-white/[0.08] px-6 py-4 text-[12px] font-semibold uppercase tracking-[0.12em]">
-                <span className="text-white/30">Feature</span>
-                <span className="text-coral">TubeMerger</span>
-                <span className="text-white/30">Cloud Tools</span>
-              </div>
-              <div className="px-6">
-                <CompRow feature="Playlist length limit" tubemerger="Unlimited" cloudTools="10–30 min cap" />
-                <CompRow feature="Account required" tubemerger="None" cloudTools="Sign-up required" />
-                <CompRow feature="Subscription cost" tubemerger="Free forever" cloudTools="$5–20 / month" />
-                <CompRow feature="Data privacy" tubemerger="100% local" cloudTools="Uploads to server" />
-                <CompRow feature="Chapter bookmarks" tubemerger="Auto-embedded" cloudTools="Not supported" />
-                <CompRow feature="Output quality" tubemerger="Up to 4K Ultra HD" cloudTools="Often capped at 1080p" />
-                <CompRow feature="Offline processing" tubemerger="Fully offline" cloudTools="Requires internet" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Key Features ─────────────────────────── */}
-        <section
-          className="border-t border-white/[0.06] px-6 py-20 sm:px-10 sm:py-28"
-          aria-labelledby="features-heading"
         >
           <div className="mx-auto max-w-[1000px]">
             <div className="mb-12 text-center">
               <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
-                What You Get
+                Workflow
               </span>
               <h2
-                id="features-heading"
-                className="reveal mt-3 font-display text-[32px] font-extrabold tracking-[-0.03em] text-white sm:text-[42px]"
+                id="how-it-works-heading"
+                className="reveal mt-3 font-display text-[30px] font-extrabold tracking-[-0.03em] text-white sm:text-[38px]"
               >
-                Everything in One Tool
+                How to Download YouTube Playlists
               </h2>
+              <p className="reveal mt-3 text-[15px] text-white/45">
+                Four quick steps from playlist link to offline files on your disk.
+              </p>
             </div>
-            <dl className="reveal grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  term: "Granular Playlist Control",
-                  desc: "Cherry-pick individual videos before the download starts. Every clip shows title, thumbnail, and duration.",
-                },
-                {
-                  term: "Auto Chapter Bookmarks",
-                  desc: "Each video becomes a native, clickable chapter inside the final MP4 — compatible with VLC, QuickTime, and YouTube.",
-                },
-                {
-                  term: "Multi-Quality Selection",
-                  desc: "Choose 360p, 480p, 720p, 1080p, or 4K. The normalizer re-encodes all clips to a consistent canvas.",
-                },
-                {
-                  term: "Separate Download Mode",
-                  desc: "Prefer individual files? Toggle Separate Downloads to save each clip on its own — no merging required.",
-                },
-                {
-                  term: "Real-Time Metrics",
-                  desc: "Watch live download speed, total playlist duration, and estimated output file size as the job runs.",
-                },
-                {
-                  term: "Zero Dependencies",
-                  desc: "yt-dlp and FFmpeg are bundled inside the app. No PATH setup, no Homebrew installs, no terminal commands.",
-                },
-              ].map(({ term, desc }) => (
-                <div
-                  key={term}
-                  className="rounded-[18px] border border-white/[0.08] bg-card p-6 transition-colors hover:border-white/[0.16]"
-                >
-                  <dt className="font-display text-[15.5px] font-bold text-white">{term}</dt>
-                  <dd className="mt-2 text-[14px] leading-relaxed text-white/50">{desc}</dd>
-                </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {steps.map((step) => (
+                <StepCard key={step.number} {...step} />
               ))}
-            </dl>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Desktop vs Web Downloaders ───────────── */}
+        <section
+          className="border-t border-white/[0.06] px-6 py-20 sm:px-10 sm:py-26"
+          aria-labelledby="comparison-heading"
+        >
+          <div className="mx-auto max-w-[960px]">
+            <div className="mb-10 text-center">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
+                Direct Comparison
+              </span>
+              <h2
+                id="comparison-heading"
+                className="reveal mt-3 font-display text-[30px] font-extrabold tracking-[-0.03em] text-white sm:text-[38px]"
+              >
+                Desktop Application vs Web Downloaders
+              </h2>
+              <p className="reveal mt-3 max-w-[560px] mx-auto text-[15px] text-white/45">
+                Why a dedicated local desktop tool is faster, safer, and cleaner than browser converters.
+              </p>
+            </div>
+
+            <div className="reveal rounded-[18px] border border-white/[0.08] bg-card overflow-hidden">
+              <div className="grid grid-cols-3 gap-4 border-b border-white/[0.08] px-6 py-4 text-[12px] font-semibold uppercase tracking-[0.12em]">
+                <span className="text-white/30">Feature</span>
+                <span className="text-coral">TubeMerger (Desktop)</span>
+                <span className="text-white/30">Web Downloaders</span>
+              </div>
+              <div className="px-6">
+                <ComparisonRow
+                  feature="Adware & Popups"
+                  desktopApp="Zero ads (clean GUI)"
+                  webDownloaders="Intrusive ads & redirects"
+                />
+                <ComparisonRow
+                  feature="Separate Files or Merged"
+                  desktopApp="Both supported"
+                  webDownloaders="Usually single file only"
+                />
+                <ComparisonRow
+                  feature="Granular Video Selection"
+                  desktopApp="Checkbox per video"
+                  webDownloaders="All or nothing"
+                />
+                <ComparisonRow
+                  feature="Video Duration Limits"
+                  desktopApp="No limit"
+                  webDownloaders="10–30 min cap"
+                />
+                <ComparisonRow
+                  feature="Resolution Support"
+                  desktopApp="Up to 4K Ultra HD"
+                  webDownloaders="Often capped at 720p"
+                />
+                <ComparisonRow
+                  feature="Privacy & Tracking"
+                  desktopApp="100% local, no telemetry"
+                  webDownloaders="Logs URLs & IP addresses"
+                />
+                <ComparisonRow
+                  feature="Cost"
+                  desktopApp="Free & Open Source (MIT)"
+                  webDownloaders="Paid upgrades & throttles"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ── FAQ ──────────────────────────────────── */}
         <section
-          className="border-t border-white/[0.06] px-6 py-20 sm:px-10 sm:py-28"
+          className="border-t border-white/[0.06] px-6 py-20 sm:px-10 sm:py-26"
           aria-labelledby="faq-heading"
         >
           <div className="mx-auto max-w-[760px]">
             <div className="mb-10 text-center">
               <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-coral">
-                Common Questions
+                Questions & Answers
               </span>
               <h2
                 id="faq-heading"
-                className="reveal mt-3 font-display text-[32px] font-extrabold tracking-[-0.03em] text-white sm:text-[40px]"
+                className="reveal mt-3 font-display text-[30px] font-extrabold tracking-[-0.03em] text-white sm:text-[38px]"
               >
-                FAQ — YouTube Playlist to MP4
+                Frequently Asked Questions
               </h2>
             </div>
             <FaqList />
           </div>
         </section>
 
-        {/* ── Final CTA ────────────────────────────── */}
-        <section className="border-t border-white/[0.06] px-6 py-20 text-center sm:px-10 sm:py-28">
-          <div className="mx-auto max-w-[580px]">
-            <YouTubeIcon className="reveal mx-auto mb-6 h-10 w-auto text-coral drop-shadow-[0_0_18px_rgba(255,59,48,0.55)]" />
-            <h2 className="reveal font-display text-[34px] font-extrabold tracking-[-0.03em] text-white sm:text-[44px]">
-              Ready to turn your playlist into one video?
+        {/* ── Final Call to Action ─────────────────── */}
+        <section className="border-t border-white/[0.06] px-6 py-20 text-center sm:px-10 sm:py-26">
+          <div className="mx-auto max-w-[600px]">
+            <YouTubeIcon className="reveal mx-auto mb-6 h-10 w-auto text-coral drop-shadow-[0_0_16px_rgba(255,59,48,0.5)]" />
+            <h2 className="reveal font-display text-[32px] font-extrabold tracking-[-0.03em] text-white sm:text-[40px]">
+              Download Playlists on Your Terms
             </h2>
-            <p className="reveal mt-4 text-[16px] leading-relaxed text-white/55">
-              Download TubeMerger — free, open-source, and private. Works on Windows, macOS, and
-              Linux with no setup.
+            <p className="reveal mt-3.5 text-[15.5px] leading-relaxed text-white/55">
+              Available for Windows, macOS, and Linux. No subscriptions, no ads, and full offline control.
             </p>
             <button
               onClick={onNavigateDownload}
-              id="playlist-page-cta-download-bottom"
-              className="reveal mt-9 inline-flex items-center justify-center rounded-full bg-coral h-14 px-10 text-[16px] font-display font-semibold text-white shadow-[0_8px_32px_-8px_rgba(255,59,48,0.7)] hover:brightness-110 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/60"
+              id="yt-downloader-cta-download-bottom"
+              className="reveal mt-8 inline-flex items-center justify-center rounded-full bg-coral h-14 px-9 text-[15.5px] font-display font-semibold text-white shadow-[0_8px_30px_-8px_rgba(255,59,48,0.65)] hover:brightness-110 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/60"
             >
-              Download Free App
+              Download TubeMerger
             </button>
           </div>
         </section>
@@ -736,7 +788,7 @@ export default function PlaylistToVideoPage({
       <MiniFooter
         onNavigateHome={onNavigateHome}
         onNavigateDownload={onNavigateDownload}
-        onNavigateYTDownloader={onNavigateYTDownloader}
+        onNavigatePlaylistGuide={onNavigatePlaylistGuide}
       />
     </div>
   )

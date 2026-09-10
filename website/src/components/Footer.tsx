@@ -28,7 +28,13 @@ function Logo() {
   )
 }
 
-export default function Footer({ onNavigatePlaylistGuide }: { onNavigatePlaylistGuide?: () => void }) {
+export default function Footer({
+  onNavigatePlaylistGuide,
+  onNavigateYTDownloader,
+}: {
+  onNavigatePlaylistGuide?: () => void
+  onNavigateYTDownloader?: () => void
+}) {
   return (
     <footer
       id="docs"
@@ -64,7 +70,15 @@ export default function Footer({ onNavigatePlaylistGuide }: { onNavigatePlaylist
               onClick={onNavigatePlaylistGuide}
               className="font-sans text-[14px] text-white/50 transition-colors hover:text-white cursor-pointer"
             >
-              Playlist Guide
+              Merge Guide
+            </button>
+          )}
+          {onNavigateYTDownloader && (
+            <button
+              onClick={onNavigateYTDownloader}
+              className="font-sans text-[14px] text-white/50 transition-colors hover:text-white cursor-pointer"
+            >
+              Playlist Downloader
             </button>
           )}
           <a

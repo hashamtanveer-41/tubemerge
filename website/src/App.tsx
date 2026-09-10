@@ -10,12 +10,13 @@ import FaqSection from "@/components/FaqSection"
 import Footer from "@/components/Footer"
 import DownloadPage from "@/pages/DownloadPage"
 import PlaylistToVideoPage from "@/pages/PlaylistToVideoPage"
+import YouTubePlaylistDownloaderPage from "@/pages/YouTubePlaylistDownloaderPage"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 
 export default function App() {
   // Handle client-side routing between Home and dedicated Download Page
-  const [currentView, setCurrentView] = useState<"home" | "download" | "playlist-guide">(() => {
+  const [currentView, setCurrentView] = useState<"home" | "download" | "playlist-guide" | "playlist-downloader">(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase()
       const hash = window.location.hash.toLowerCase()
@@ -24,6 +25,9 @@ export default function App() {
       }
       if (path === "/playlist-to-single-video") {
         return "playlist-guide"
+      }
+      if (path === "/youtube-playlist-downloader") {
+        return "playlist-downloader"
       }
     }
     return "home"
@@ -38,6 +42,8 @@ export default function App() {
         setCurrentView("download")
       } else if (path === "/playlist-to-single-video") {
         setCurrentView("playlist-guide")
+      } else if (path === "/youtube-playlist-downloader") {
+        setCurrentView("playlist-downloader")
       } else {
         setCurrentView("home")
       }
@@ -72,6 +78,18 @@ export default function App() {
       }
     } catch {
       window.location.hash = "#playlist-to-single-video"
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const navigateToYTDownloader = () => {
+    setCurrentView("playlist-downloader")
+    try {
+      if (window.location.pathname !== "/youtube-playlist-downloader") {
+        window.history.pushState(null, "", "/youtube-playlist-downloader")
+      }
+    } catch {
+      window.location.hash = "#youtube-playlist-downloader"
     }
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -127,6 +145,13 @@ export default function App() {
         <PlaylistToVideoPage
           onNavigateHome={navigateToHome}
           onNavigateDownload={navigateToDownload}
+          onNavigateYTDownloader={navigateToYTDownloader}
+        />
+      ) : currentView === "playlist-downloader" ? (
+        <YouTubePlaylistDownloaderPage
+          onNavigateHome={navigateToHome}
+          onNavigateDownload={navigateToDownload}
+          onNavigatePlaylistGuide={navigateToPlaylistGuide}
         />
       ) : (
         <div className="min-h-screen bg-canvas text-white selection:bg-coral/30 selection:text-white flex flex-col">
@@ -156,7 +181,10 @@ export default function App() {
           </main>
 
           {/* Footer */}
-          <Footer onNavigatePlaylistGuide={navigateToPlaylistGuide} />
+          <Footer
+            onNavigatePlaylistGuide={navigateToPlaylistGuide}
+            onNavigateYTDownloader={navigateToYTDownloader}
+          />
         </div>
       )}
 
