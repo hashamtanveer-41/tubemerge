@@ -95,10 +95,10 @@ export default function Hero({ onOpenDownload }: HeroProps) {
 
         {/* Subtitle */}
         <p
-          className="rise-in mx-auto mt-[26px] text-[16px] text-white/45"
+          className="rise-in mx-auto mt-[26px] max-w-[680px] text-[16px] sm:text-[18px] leading-relaxed text-white/65"
           style={{ "--rise-delay": "260ms" } as React.CSSProperties}
         >
-          One link in. One stitched master out.
+          TubeMerger is a free, open-source desktop app that downloads selected playlist videos and stitches them into a single MP4 locally on your machine—no ads, cloud limits, or subscriptions.
         </p>
 
         {/* Action Buttons */}
