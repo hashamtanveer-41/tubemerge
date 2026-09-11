@@ -122,6 +122,69 @@ function CheckIcon({ className = "" }: { className?: string }) {
   )
 }
 
+function DownloadIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M10 3v10m0 0l-4-4m4 4l4-4M3 17h14" />
+    </svg>
+  )
+}
+
+function TerminalIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="m4 6 4 4-4 4M11 14h5" />
+    </svg>
+  )
+}
+
+function CopyIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="7" y="7" width="10" height="10" rx="2" />
+      <path d="M4 13V5a2 2 0 0 1 2-2h8" />
+    </svg>
+  )
+}
+
+type DetectedOS = "win" | "mac" | "linux"
+
+function detectUserOS(): DetectedOS {
+  if (typeof window === "undefined" || !navigator) return "win"
+  const ua = (navigator.userAgent || "").toLowerCase()
+  if (ua.includes("win")) return "win"
+  if (ua.includes("mac") || ua.includes("darwin")) return "mac"
+  if (ua.includes("linux") || ua.includes("x11") || ua.includes("ubuntu")) return "linux"
+  return "win"
+}
+
 interface DownloadPageProps {
   onNavigateHome: () => void
   onNavigateToCommunity?: () => void
@@ -141,10 +204,13 @@ export default function DownloadPage({
     useState<DownloadedState | null>(null)
   const [redirectSeconds, setRedirectSeconds] = useState<number>(5)
   const [isRedirectPaused, setIsRedirectPaused] = useState<boolean>(false)
-  const { release, loading: releaseLoading } = useLatestRelease()
+  const [detectedOS, setDetectedOS] = useState<DetectedOS>("win")
+  const [copiedTerminal, setCopiedTerminal] = useState<boolean>(false)
+  const { release } = useLatestRelease()
 
   useEffect(() => {
     window.scrollTo(0, 0)
+    setDetectedOS(detectUserOS())
   }, [])
 
   // Auto-redirect to community section after download
@@ -174,7 +240,17 @@ export default function DownloadPage({
   ])
 
   // Build platform data from live release (or static fallback)
-  const platforms = {
+  const platforms: Record<
+    DetectedOS,
+    {
+      name: string
+      heading: string
+      versionInfo: string
+      icon: React.ReactNode
+      file: string
+      url: string
+    }
+  > = {
     win: {
       name: release.platforms.win.name,
       heading: release.platforms.win.heading,
@@ -225,9 +301,38 @@ export default function DownloadPage({
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  const terminalCommand =
+    "git clone https://github.com/hashamtanveer-41/tubemerger.git && cd tubemerger && pip install -r requirements.txt && python3 main.py"
+
+  const handleCopyTerminal = async () => {
+    try {
+      await navigator.clipboard.writeText(terminalCommand)
+      setCopiedTerminal(true)
+      setTimeout(() => setCopiedTerminal(false), 2000)
+    } catch {
+      const textarea = document.createElement("textarea")
+      textarea.value = terminalCommand
+      textarea.style.position = "fixed"
+      textarea.style.opacity = "0"
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand("copy")
+      document.body.removeChild(textarea)
+      setCopiedTerminal(true)
+      setTimeout(() => setCopiedTerminal(false), 2000)
+    }
+  }
+
   // Consistent red outline for all download cards on hover, focus, and click
   const cardButtonClass =
     "flex items-center gap-4 p-5 rounded-2xl border border-white/[0.08] bg-[#12141D] hover:bg-[#171924] hover:border-coral/60 active:border-coral active:ring-1 active:ring-coral focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral active:scale-[0.99] transition-all cursor-pointer text-left group shadow-sm"
+
+  const alternativeOSLabel =
+    detectedOS === "linux"
+      ? "Windows & macOS"
+      : detectedOS === "mac"
+        ? "Windows & Linux"
+        : "macOS & Linux"
 
   return (
     <div className="min-h-screen bg-[#090A0F] text-white selection:bg-coral/30 selection:text-white flex flex-col font-sans">
@@ -271,7 +376,7 @@ export default function DownloadPage({
       {/* ──────────────────────────────────────────────────────────────────────────
           MAIN CONTENT
          ────────────────────────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col justify-center py-16 sm:py-24 px-6 sm:px-8">
+      <main className="flex-1 flex flex-col justify-center py-12 sm:py-20 px-6 sm:px-8">
         {downloadedState ? (
           /* ───────────────────────────────────────────────────────────────────────
              MINIMAL THANK YOU VIEW
@@ -363,107 +468,211 @@ export default function DownloadPage({
           </div>
         ) : (
           /* ───────────────────────────────────────────────────────────────────────
-             MINIMAL 3 DOWNLOAD BUTTONS (Consistent Red Outline, No Arrow Icon)
+             OPTIMIZED DOWNLOAD EXPERIENCE (OS Hero CTA + 3 Grid + Terminal)
              ─────────────────────────────────────────────────────────────────────── */
-          <div className="mx-auto max-w-[960px] w-full space-y-10">
-            {/* Title + live version badge */}
-            <div className="text-center max-w-[600px] mx-auto space-y-3">
-              <h1 className="text-[32px] sm:text-[40px] font-bold text-white tracking-tight leading-tight">
+          <div className="mx-auto max-w-[960px] w-full space-y-12">
+            {/* 1. OS Auto-Detection Hero */}
+            <div className="text-center max-w-[680px] mx-auto space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-[#12141D] text-[12.5px] font-medium text-white/70">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Latest Release v{release.version}</span>
+              </div>
+
+              <h1 className="text-[34px] sm:text-[44px] font-bold text-white tracking-tight leading-tight">
                 Download TubeMerger
               </h1>
-              <p className="text-[15px] sm:text-[16px] text-white/60">
-                100% Free &amp; open-source desktop app for all operating systems.
+
+              <p className="text-[15px] sm:text-[16px] text-white/65 max-w-[540px] mx-auto leading-relaxed">
+                100% Free &amp; open-source desktop app for Windows, macOS, and Linux.
+                Merge full YouTube playlists offline with zero cloud processing.
               </p>
-            </div>
 
-            {/* 3 Minimal Buttons in a Clean Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[920px] mx-auto w-full">
-              {/* Windows Button */}
-              <button
-                onClick={() =>
-                  triggerDownload(
-                    platforms.win.name,
-                    platforms.win.file,
-                    platforms.win.url,
-                  )
-                }
-                className={cardButtonClass}
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/40 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-                  {platforms.win.icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15.5px] font-bold text-white group-hover:text-coral transition-colors">
-                    {platforms.win.heading}
-                  </div>
-                  <div className="text-[13px] text-white/50 mt-0.5">
-                    {platforms.win.versionInfo}
-                  </div>
-                </div>
-              </button>
-
-              {/* macOS Button */}
-              <button
-                onClick={() =>
-                  triggerDownload(
-                    platforms.mac.name,
-                    platforms.mac.file,
-                    platforms.mac.url,
-                  )
-                }
-                className={cardButtonClass}
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/40 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-                  {platforms.mac.icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15.5px] font-bold text-white group-hover:text-coral transition-colors">
-                    {platforms.mac.heading}
-                  </div>
-                  <div className="text-[13px] text-white/50 mt-0.5">
-                    {platforms.mac.versionInfo}
-                  </div>
-                </div>
-              </button>
-
-              {/* Linux Button (Official Ubuntu Circle of Friends Icon) */}
-              <button
-                onClick={() =>
-                  triggerDownload(
-                    platforms.linux.name,
-                    platforms.linux.file,
-                    platforms.linux.url,
-                  )
-                }
-                className={cardButtonClass}
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/40 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-                  {platforms.linux.icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15.5px] font-bold text-white group-hover:text-coral transition-colors">
-                    {platforms.linux.heading}
-                  </div>
-                  <div className="text-[13px] text-white/50 mt-0.5">
-                    {platforms.linux.versionInfo}
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            {/* Subtle GitHub & Trust Links */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 text-[13px] text-white/40">
-              <div>
-                Looking for source code?{" "}
-                <a
-                  href="https://github.com/hashamtanveer-41/tubemerger"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 hover:text-white underline transition-colors"
+              {/* Primary High-Contrast CTA for Detected OS */}
+              <div className="pt-2 flex flex-col items-center">
+                <button
+                  onClick={() =>
+                    triggerDownload(
+                      platforms[detectedOS].name,
+                      platforms[detectedOS].file,
+                      platforms[detectedOS].url,
+                    )
+                  }
+                  className="group inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-coral hover:bg-[#ff4e44] text-white font-semibold text-[15.5px] sm:text-[16.5px] shadow-lg shadow-coral/25 active:scale-[0.99] transition-all cursor-pointer border border-white/10"
                 >
-                  View repository on GitHub
-                </a>
+                  <div className="flex items-center justify-center w-5 h-5 shrink-0">
+                    {platforms[detectedOS].icon}
+                  </div>
+                  <span>
+                    Download TubeMerger for {platforms[detectedOS].name} (v{release.version})
+                  </span>
+                  <DownloadIcon className="h-5 w-5 shrink-0 opacity-80 group-hover:translate-y-0.5 transition-transform" />
+                </button>
+
+                <p className="text-[13px] text-white/45 mt-3">
+                  Also available for {alternativeOSLabel} below
+                </p>
               </div>
+            </div>
+
+            {/* 2. Platform Selector Grid (3 Manual Options) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between max-w-[920px] mx-auto px-1">
+                <span className="text-[13px] font-medium uppercase tracking-wider text-white/40">
+                  All Platforms
+                </span>
+                <span className="text-[12.5px] text-white/40">
+                  Standalone binaries • No installer required
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[920px] mx-auto w-full">
+                {/* Windows Button */}
+                <button
+                  onClick={() =>
+                    triggerDownload(
+                      platforms.win.name,
+                      platforms.win.file,
+                      platforms.win.url,
+                    )
+                  }
+                  className={cardButtonClass}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/40 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+                    {platforms.win.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[15px] font-bold text-white group-hover:text-coral transition-colors truncate">
+                        {platforms.win.heading}
+                      </div>
+                      {detectedOS === "win" && (
+                        <span className="text-[10.5px] font-medium tracking-wide uppercase px-2 py-0.5 rounded bg-coral/15 text-coral border border-coral/30 shrink-0">
+                          Detected
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[13px] text-white/50 mt-0.5">
+                      {platforms.win.versionInfo}
+                    </div>
+                  </div>
+                </button>
+
+                {/* macOS Button */}
+                <button
+                  onClick={() =>
+                    triggerDownload(
+                      platforms.mac.name,
+                      platforms.mac.file,
+                      platforms.mac.url,
+                    )
+                  }
+                  className={cardButtonClass}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/40 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+                    {platforms.mac.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[15px] font-bold text-white group-hover:text-coral transition-colors truncate">
+                        {platforms.mac.heading}
+                      </div>
+                      {detectedOS === "mac" && (
+                        <span className="text-[10.5px] font-medium tracking-wide uppercase px-2 py-0.5 rounded bg-coral/15 text-coral border border-coral/30 shrink-0">
+                          Detected
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[13px] text-white/50 mt-0.5">
+                      {platforms.mac.versionInfo}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Linux Button */}
+                <button
+                  onClick={() =>
+                    triggerDownload(
+                      platforms.linux.name,
+                      platforms.linux.file,
+                      platforms.linux.url,
+                    )
+                  }
+                  className={cardButtonClass}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/40 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+                    {platforms.linux.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[15px] font-bold text-white group-hover:text-coral transition-colors truncate">
+                        {platforms.linux.heading}
+                      </div>
+                      {detectedOS === "linux" && (
+                        <span className="text-[10.5px] font-medium tracking-wide uppercase px-2 py-0.5 rounded bg-coral/15 text-coral border border-coral/30 shrink-0">
+                          Detected
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[13px] text-white/50 mt-0.5">
+                      {platforms.linux.versionInfo}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Power User Terminal Option */}
+            <div className="max-w-[920px] mx-auto w-full space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2 text-[13.5px] font-medium text-white/70">
+                  <TerminalIcon className="h-4 w-4 text-white/50" />
+                  <span>Run from Source / CLI</span>
+                </div>
+                <span className="text-[12px] text-white/40">
+                  Python 3.10+ • FFmpeg required
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.08] bg-[#0E1017] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.06] bg-[#12141D]">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                    <span className="text-[12px] text-white/40 font-mono ml-1.5">bash</span>
+                  </div>
+
+                  <button
+                    onClick={handleCopyTerminal}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-medium bg-white/[0.06] hover:bg-white/[0.12] text-white/80 hover:text-white transition-colors cursor-pointer border border-white/[0.08]"
+                    aria-label="Copy terminal command"
+                  >
+                    {copiedTerminal ? (
+                      <>
+                        <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-medium">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <CopyIcon className="h-3.5 w-3.5 text-white/60" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-4 overflow-x-auto select-all">
+                  <code className="font-mono text-[13px] text-slate-300 whitespace-nowrap block">
+                    <span className="text-coral select-none mr-2">$</span>
+                    {terminalCommand}
+                  </code>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Trust Signals & AlternativeTo (No Redundant Repetition) */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 text-[13px] text-white/45">
+              <span>100% Local Processing • Zero Cloud Uploads</span>
               <span className="hidden sm:inline text-white/20">•</span>
               <a 
                 href="https://alternativeto.net/software/tubemerger/" 
@@ -497,19 +706,10 @@ export default function DownloadPage({
             >
               Home
             </button>
-            <span>•</span>
-            <a
-              href="https://github.com/hashamtanveer-41/tubemerger"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
-            >
-              <GitHubIcon className="h-3.5 w-3.5" />
-              <span>GitHub</span>
-            </a>
           </div>
         </div>
       </footer>
     </div>
   )
 }
+
