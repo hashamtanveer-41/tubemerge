@@ -103,83 +103,70 @@
           "name": "TubeMerger",
           "publisher": {
             "@id": "https://tubemerger.com/#organization"
+        },
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://tubemerger.com/#breadcrumbs",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://tubemerger.com/"
           },
-          "inLanguage": "en-US"
-        },
-        {
-          "@type": "FAQPage",
-          "@id": "https://tubemerger.com/#faq",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "How does TubeMerger merge video playlists completely offline?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "TubeMerger operates 100% locally on your computer. It downloads and analyzes playlist streams, then joins and aligns them directly on your local drive with zero cloud uploads or privacy risks."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Does TubeMerger automatically generate video chapters?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes! Every video in the playlist is converted into a clickable chapter bookmark with its original title and timestamp embedded directly into the final MP4/MKV container."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Is TubeMerger really 100% free and open source?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes! TubeMerger is 100% free and open source under the MIT license. There are no subscriptions, no locked tiers, and no license keys required."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What operating systems are supported?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "TubeMerger is built to run reliably on all major operating systems, including macOS (Universal Apple Silicon & Intel), Windows 10/11, and modern 64-bit Linux distributions."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Can I skip specific videos in a playlist before downloading?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. TubeMerger's Granular Playlist Control lets you individually select or deselect any video in the playlist before the merge starts. Only the clips you choose are downloaded and processed — perfect for skipping intros, ads, or irrelevant episodes."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Can I download playlist videos as separate files instead of one merged video?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Absolutely. TubeMerger supports both Stitched mode (all selected clips merged into one seamless master video with chapter bookmarks) and Separate Downloads mode (each chosen video saved as its own individual file in a dedicated folder), giving you complete flexibility over your output."
-              }
-            }
-          ]
-        },
-        {
-          "@type": "BreadcrumbList",
-          "@id": "https://tubemerger.com/#breadcrumbs",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Home",
-              "item": "https://tubemerger.com/"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "Download",
-              "item": "https://tubemerger.com/download"
-            }
-          ]
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Download",
+            "item": "https://tubemerger.com/download"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I turn an entire YouTube playlist into one video?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Paste your playlist URL into TubeMerger, select your preferred video resolution, uncheck any unwanted intro or outro clips, and choose Stitched mode. TubeMerger downloads the clips locally and joins them into a single MP4 with seekable chapter markers."
         }
-      ]
-    }
+      },
+      {
+        "@type": "Question",
+        "name": "Can TubeMerger merge videos with different resolutions or aspect ratios?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. TubeMerger runs a local normalization pass using FFmpeg to standardize frame rates, canvas padding, and audio sample rates (AAC 44.1kHz) across all clips before stitching, preventing audio desynchronization and aspect ratio distortion."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does TubeMerger upload my video files or playlist links to external servers?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. TubeMerger is 100% offline and local-first. All stream extraction and video processing are performed directly on your machine via yt-dlp and FFmpeg without any cloud queues or third-party tracking."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is TubeMerger free and open-source?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, TubeMerger is released under the MIT open-source license with no advertisements, subscription fees, or video duration caps. Pre-compiled binaries are available for Windows, macOS, and Linux."
+        }
+      }
+    ]
+  }
   </script>
 </head>
 
