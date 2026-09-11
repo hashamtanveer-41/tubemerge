@@ -1,18 +1,22 @@
 # TubeMerger 🎬
 
-> **Free, Open-Source Desktop Application to Download & Merge YouTube Playlists into a Single Video**  
-> *Official Website: [tubemerger.com](https://tubemerger.com) · GitHub: [hashamtanveer-41/tubemerger](https://github.com/hashamtanveer-41/tubemerger) · Demo: [YouTube](https://youtu.be/9UKKVZPkXHk)*
+<p align="center">
+  <a href="https://tubemerger.com"><img src="https://img.shields.io/badge/Website-tubemerger.com-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Official Website" /></a>
+  <a href="https://tubemerger.com/download"><img src="https://img.shields.io/badge/Download-Release%20Binaries-10b981?style=for-the-badge&logo=windows&logoColor=white" alt="Download Releases" /></a>
+  <a href="https://github.com/hashamtanveer-41/tubemerger/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License" /></a>
+  <a href="https://youtu.be/9UKKVZPkXHk"><img src="https://img.shields.io/badge/Demo-YouTube%20Walkthrough-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube Demo" /></a>
+</p>
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg)](https://fastapi.tiangolo.com/)
-[![React 19](https://img.shields.io/badge/react-19.0-61DAFB.svg)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/typescript-5.7-3178C6.svg)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/tailwindcss-4.0-38B2AC.svg)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo%20Video-FF0000?logo=youtube&logoColor=white)](https://youtu.be/9UKKVZPkXHk)
-[![Version](https://img.shields.io/badge/version-1.0.9-brightgreen.svg)](https://github.com/hashamtanveer-41/tubemerger/releases/latest)
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-0.111+-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/version-1.0.9-brightgreen?style=flat-square" alt="Version 1.0.9" />
+</p>
 
-**TubeMerger** is a 100% free, open-source desktop application for Windows, macOS, and Linux that lets you **download YouTube playlists offline** and **merge a full playlist into a single seamless video** — or save each clip as a separate file. Powered by yt-dlp and FFmpeg running entirely on your local machine, TubeMerger is an ad-free video downloader with no accounts, no subscriptions, no upload limits, and no cloud dependencies. Paste a playlist URL, pick which videos to include, choose your quality, and get a broadcast-quality MP4 with automatic chapter bookmarks in minutes.
+**[TubeMerger](https://tubemerger.com)** is a 100% free, open-source desktop application for Windows, macOS, and Linux that lets you **[download YouTube playlists](https://tubemerger.com/download)** and **[merge full playlists into a single seamless video](https://tubemerger.com/playlist-to-single-video)** with automatic chapter markers. Powered by `yt-dlp` and `FFmpeg` running entirely on your local machine, TubeMerger is an ad-free video downloader with no cloud queues, no account registrations, and no artificial duration caps.
 
 What makes TubeMerger different from every other YouTube playlist downloader is its granular per-video control. Unlike bulk download tools that blindly grab everything, TubeMerger shows you every video in the playlist before downloading — letting you skip or exclude specific clips with a single click. You also get real-time metrics while the merge runs: live download speed, total playlist duration, and an estimated output file size, so you always know exactly what is happening on your machine.
 
@@ -25,6 +29,9 @@ See TubeMerger in action — pasting a playlist, skipping unwanted clips, choosi
 [![Watch TubeMerger Demo](https://img.youtube.com/vi/9UKKVZPkXHk/maxresdefault.jpg)](https://youtu.be/9UKKVZPkXHk)
 
 > 📺 **[Watch the full demo walkthrough on YouTube](https://youtu.be/9UKKVZPkXHk)**
+
+> 📖 **Read the Engineering Deep Dive:** Want to learn how TubeMerger handles dynamic canvas scaling, audio drift normalization, and local SSE progress streaming? Read the full article on Dev.to:  
+> 👉 **[How I Built an Offline YouTube Playlist Downloader & Merger with FastAPI, React, and FFmpeg](https://dev.to/hasham41/how-i-built-an-offline-youtube-playlist-downloader-merger-with-fastapi-react-and-ffmpeg-49n)**
 
 ---
 
