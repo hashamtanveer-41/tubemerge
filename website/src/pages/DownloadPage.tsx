@@ -473,11 +473,6 @@ export default function DownloadPage({
           <div className="mx-auto max-w-[960px] w-full space-y-12">
             {/* 1. OS Auto-Detection Hero */}
             <div className="text-center max-w-[680px] mx-auto space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-[#12141D] text-[12.5px] font-medium text-white/70">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span>Latest Release v{release.version}</span>
-              </div>
-
               <h1 className="text-[34px] sm:text-[44px] font-bold text-white tracking-tight leading-tight">
                 Download TubeMerger
               </h1>
