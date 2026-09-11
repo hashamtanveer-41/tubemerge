@@ -206,6 +206,7 @@ export default function DownloadPage({
   const [isRedirectPaused, setIsRedirectPaused] = useState<boolean>(false)
   const [detectedOS, setDetectedOS] = useState<DetectedOS>("win")
   const [copiedTerminal, setCopiedTerminal] = useState<boolean>(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false)
   const { release } = useLatestRelease()
 
   useEffect(() => {
@@ -337,9 +338,9 @@ export default function DownloadPage({
   return (
     <div className="min-h-screen bg-[#090A0F] text-white selection:bg-coral/30 selection:text-white flex flex-col font-sans">
       {/* ──────────────────────────────────────────────────────────────────────────
-          CLEAN SOLID NAVBAR
+          CLEAN SOLID NAVBAR (Consistent Desktop + Mobile Hamburger Menu)
          ────────────────────────────────────────────────────────────────────────── */}
-      <header className="border-b border-white/[0.08] bg-[#0E1017]">
+      <header className="border-b border-white/[0.08] bg-[#0E1017] sticky top-0 z-40">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-6 sm:px-8">
           <button
             onClick={onNavigateHome}
@@ -352,7 +353,8 @@ export default function DownloadPage({
             </span>
           </button>
 
-          <div className="flex items-center gap-3">
+          {/* Desktop Navigation Actions */}
+          <div className="hidden sm:flex items-center gap-3">
             <button
               onClick={onNavigateHome}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[14px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer font-medium"
@@ -370,7 +372,65 @@ export default function DownloadPage({
               <span>GitHub</span>
             </a>
           </div>
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
+            className="flex sm:hidden p-2 -mr-1 rounded-lg text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-6 w-6"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              {mobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-white/[0.08] bg-[#0E1017] px-6 py-4 space-y-3 animate-in fade-in duration-150 shadow-2xl">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false)
+                onNavigateHome()
+              }}
+              className="w-full flex items-center gap-2.5 py-2.5 px-3 rounded-lg text-[14.5px] font-medium text-white/80 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer text-left"
+            >
+              <ArrowLeftIcon className="h-4 w-4 text-coral shrink-0" />
+              <span>Back to Website</span>
+            </button>
+            <div className="pt-2 border-t border-white/[0.06]">
+              <a
+                href="https://github.com/hashamtanveer-41/tubemerger"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] h-10 text-[14px] font-medium text-white/90 transition-all"
+              >
+                <GitHubIcon className="h-4 w-4" />
+                <span>View on GitHub</span>
+              </a>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ──────────────────────────────────────────────────────────────────────────
@@ -494,7 +554,7 @@ export default function DownloadPage({
                   }
                   className="group inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-coral hover:bg-[#ff4e44] text-white font-semibold text-[15.5px] sm:text-[16.5px] shadow-lg shadow-coral/25 active:scale-[0.99] transition-all cursor-pointer border border-white/10"
                 >
-                  <div className="flex items-center justify-center w-5 h-5 shrink-0">
+                  <div className="flex items-center justify-center w-5 h-5 shrink-0 text-white [&>svg]:text-white [&>svg]:fill-white">
                     {platforms[detectedOS].icon}
                   </div>
                   <span>
