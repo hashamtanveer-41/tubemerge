@@ -101,6 +101,14 @@ export default function Footer({
       </div>
       <div className="mx-auto mt-10 flex max-w-[1280px] flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/[0.06] pt-6">
         <span className="text-[13px] text-white/35">© 2026 tubemerger.com</span>
+        <a 
+          href="https://alternativeto.net/software/tubemerger/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-xs text-slate-400 hover:text-indigo-400 transition"
+        >
+          Find us on AlternativeTo
+        </a>
         <span className="text-[13px] text-white/35">
           Made for people who hate re-uploading.
         </span>

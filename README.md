@@ -4,6 +4,7 @@
   <a href="https://tubemerger.com"><img src="https://img.shields.io/badge/Website-tubemerger.com-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Official Website" /></a>
   <a href="https://tubemerger.com/download"><img src="https://img.shields.io/badge/Download-Release%20Binaries-10b981?style=for-the-badge&logo=windows&logoColor=white" alt="Download Releases" /></a>
   <a href="https://github.com/hashamtanveer-41/tubemerger/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License" /></a>
+  <a href="https://alternativeto.net/software/tubemerger/"><img src="https://img.shields.io/badge/AlternativeTo-Listed-0080FF?style=for-the-badge&logo=alternativeto&logoColor=white" alt="AlternativeTo" /></a>
   <a href="https://youtu.be/9UKKVZPkXHk"><img src="https://img.shields.io/badge/Demo-YouTube%20Walkthrough-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube Demo" /></a>
 </p>
 

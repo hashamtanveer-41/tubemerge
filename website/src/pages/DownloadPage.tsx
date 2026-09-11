@@ -451,16 +451,27 @@ export default function DownloadPage({
               </button>
             </div>
 
-            {/* Subtle GitHub Link */}
-            <div className="text-center pt-2 text-[13px] text-white/40">
-              Looking for source code?{" "}
-              <a
-                href="https://github.com/hashamtanveer-41/tubemerger"
-                target="_blank"
+            {/* Subtle GitHub & Trust Links */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 text-[13px] text-white/40">
+              <div>
+                Looking for source code?{" "}
+                <a
+                  href="https://github.com/hashamtanveer-41/tubemerger"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 hover:text-white underline transition-colors"
+                >
+                  View repository on GitHub
+                </a>
+              </div>
+              <span className="hidden sm:inline text-white/20">•</span>
+              <a 
+                href="https://alternativeto.net/software/tubemerger/" 
+                target="_blank" 
                 rel="noopener noreferrer"
-                className="text-white/60 hover:text-white underline transition-colors"
+                className="text-xs text-slate-400 hover:text-indigo-400 transition"
               >
-                View repository on GitHub
+                Find us on AlternativeTo
               </a>
             </div>
           </div>
